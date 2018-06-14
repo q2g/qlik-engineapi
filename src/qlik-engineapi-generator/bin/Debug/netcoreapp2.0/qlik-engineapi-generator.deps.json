@@ -6,14 +6,14 @@
   "compilationOptions": {},
   "targets": {
     ".NETCoreApp,Version=v2.0": {
-      "QlikApiParser/1.0.0": {
+      "qlik-engineapi-generator/1.0.0": {
         "dependencies": {
           "Microsoft.Extensions.PlatformAbstractions": "1.1.0",
           "NLog": "4.5.6",
           "Newtonsoft.Json": "11.0.2"
         },
         "runtime": {
-          "QlikApiParser.dll": {}
+          "qlik-engineapi-generator.dll": {}
         }
       },
       "Microsoft.Extensions.PlatformAbstractions/1.1.0": {
@@ -83,7 +83,7 @@
     }
   },
   "libraries": {
-    "QlikApiParser/1.0.0": {
+    "qlik-engineapi-generator/1.0.0": {
       "type": "project",
       "serviceable": false,
       "sha512": ""

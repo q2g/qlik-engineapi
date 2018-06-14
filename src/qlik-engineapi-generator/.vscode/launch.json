@@ -9,7 +9,7 @@
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "build",
-            "program": "${workspaceFolder}/bin/Debug/netcoreapp2.0/QlikApiParser.dll",
+            "program": "${workspaceFolder}/bin/Debug/netcoreapp2.0/qlik-engineapi-generator.dll",
             "args": ["C:\\Users\\MBerthold\\Documents\\TestArea\\QlikApi\\jsonrpcapi.json"],
             "cwd": "${workspaceFolder}",
             "console": "externalTerminal",

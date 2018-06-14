@@ -33,13 +33,13 @@ namespace QlikApiParser
         #endregion
 
         #region public methods
-        public JObject Parse(string qlikApiFile)
+        public Dictionary<string, EngineObject> Parse(string qlikApiFile)
         {
             try
             {
                 var content = File.ReadAllText(qlikApiFile);
-                var result = JObject.Parse(content);
-                var definitionsToken = result["definitions"] as JObject;
+                var pObject = JObject.Parse(content);
+                var definitionsToken = pObject["definitions"] as JObject;
                 var definitions = new Dictionary<string, EngineObject>();
                 foreach (var child in definitionsToken.Children())
                 {
@@ -89,7 +89,7 @@ namespace QlikApiParser
                     }
                 }
 
-                return result;
+                return definitions;
             }
             catch (Exception ex)
             {

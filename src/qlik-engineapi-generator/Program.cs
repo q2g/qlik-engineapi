@@ -21,6 +21,8 @@
         {
             try
             {
+                logger.Info("qlik-engineapi-generator");
+                logger.Info("load log options...");
                 SetLoggerSettings();
                 var workingFile = args?.FirstOrDefault() ?? null;
                 if (workingFile == null)
@@ -37,8 +39,6 @@
             {
                 logger.Error(ex, "APP ERROR");
             }
-
-            Console.WriteLine("Hello World!");
         }
 
         #region Private Methods

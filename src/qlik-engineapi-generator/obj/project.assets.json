@@ -1367,11 +1367,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "c:\\Users\\MBerthold\\Documents\\Entwicklung\\Projects\\qlik-engineapi\\src\\qlik-engineapi-generator\\QlikApiParser.csproj",
-      "projectName": "QlikApiParser",
-      "projectPath": "c:\\Users\\MBerthold\\Documents\\Entwicklung\\Projects\\qlik-engineapi\\src\\qlik-engineapi-generator\\QlikApiParser.csproj",
+      "projectUniqueName": "C:\\Users\\MBerthold\\Documents\\Entwicklung\\Projects\\qlik-engineapi\\src\\qlik-engineapi-generator\\qlik-engineapi-generator.csproj",
+      "projectName": "qlik-engineapi-generator",
+      "projectPath": "C:\\Users\\MBerthold\\Documents\\Entwicklung\\Projects\\qlik-engineapi\\src\\qlik-engineapi-generator\\qlik-engineapi-generator.csproj",
       "packagesPath": "C:\\Users\\MBerthold\\.nuget\\packages\\",
-      "outputPath": "c:\\Users\\MBerthold\\Documents\\Entwicklung\\Projects\\qlik-engineapi\\src\\qlik-engineapi-generator\\obj\\",
+      "outputPath": "C:\\Users\\MBerthold\\Documents\\Entwicklung\\Projects\\qlik-engineapi\\src\\qlik-engineapi-generator\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files\\dotnet\\sdk\\NuGetFallbackFolder"

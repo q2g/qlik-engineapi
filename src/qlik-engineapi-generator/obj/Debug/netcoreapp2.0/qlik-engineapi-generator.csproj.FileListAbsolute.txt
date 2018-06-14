@@ -1,0 +1,13 @@
+C:\Users\MBerthold\Documents\Entwicklung\Projects\qlik-engineapi\src\qlik-engineapi-generator\bin\Debug\netcoreapp2.0\app.config
+C:\Users\MBerthold\Documents\Entwicklung\Projects\qlik-engineapi\src\qlik-engineapi-generator\bin\Debug\netcoreapp2.0\qlik-engineapi-generator.dll.config
+C:\Users\MBerthold\Documents\Entwicklung\Projects\qlik-engineapi\src\qlik-engineapi-generator\bin\Debug\netcoreapp2.0\qlik-engineapi-generator.deps.json
+C:\Users\MBerthold\Documents\Entwicklung\Projects\qlik-engineapi\src\qlik-engineapi-generator\bin\Debug\netcoreapp2.0\qlik-engineapi-generator.runtimeconfig.json
+C:\Users\MBerthold\Documents\Entwicklung\Projects\qlik-engineapi\src\qlik-engineapi-generator\bin\Debug\netcoreapp2.0\qlik-engineapi-generator.runtimeconfig.dev.json
+C:\Users\MBerthold\Documents\Entwicklung\Projects\qlik-engineapi\src\qlik-engineapi-generator\bin\Debug\netcoreapp2.0\qlik-engineapi-generator.dll
+C:\Users\MBerthold\Documents\Entwicklung\Projects\qlik-engineapi\src\qlik-engineapi-generator\bin\Debug\netcoreapp2.0\qlik-engineapi-generator.pdb
+C:\Users\MBerthold\Documents\Entwicklung\Projects\qlik-engineapi\src\qlik-engineapi-generator\obj\Debug\netcoreapp2.0\qlik-engineapi-generator.csprojAssemblyReference.cache
+C:\Users\MBerthold\Documents\Entwicklung\Projects\qlik-engineapi\src\qlik-engineapi-generator\obj\Debug\netcoreapp2.0\qlik-engineapi-generator.csproj.CoreCompileInputs.cache
+C:\Users\MBerthold\Documents\Entwicklung\Projects\qlik-engineapi\src\qlik-engineapi-generator\obj\Debug\netcoreapp2.0\qlik-engineapi-generator.AssemblyInfoInputs.cache
+C:\Users\MBerthold\Documents\Entwicklung\Projects\qlik-engineapi\src\qlik-engineapi-generator\obj\Debug\netcoreapp2.0\qlik-engineapi-generator.AssemblyInfo.cs
+C:\Users\MBerthold\Documents\Entwicklung\Projects\qlik-engineapi\src\qlik-engineapi-generator\obj\Debug\netcoreapp2.0\qlik-engineapi-generator.dll
+C:\Users\MBerthold\Documents\Entwicklung\Projects\qlik-engineapi\src\qlik-engineapi-generator\obj\Debug\netcoreapp2.0\qlik-engineapi-generator.pdb
