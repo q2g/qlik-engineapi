@@ -9,9 +9,10 @@ namespace QlikApiParser
     using System.Linq;
     using System.Collections.Generic;
     using Newtonsoft.Json.Serialization;
+    using System.Text;
     #endregion
 
-    public class QlikApiReader
+    public class QlikApiGenerator
     {
         #region Logger
         private static readonly Logger logger = LogManager.GetCurrentClassLogger();
@@ -33,25 +34,21 @@ namespace QlikApiParser
         #endregion
 
         #region public methods
-        public Dictionary<string, EngineObject> Parse(string qlikApiFile)
+        public Dictionary<string, EngineObject> Parse(JObject mergeObject)
         {
             try
             {
-                var content = File.ReadAllText(qlikApiFile);
-                var pObject = JObject.Parse(content);
-                var definitionsToken = pObject["definitions"] as JObject;
+                var definitionsToken = mergeObject["definitions"] as JObject;
                 var definitions = new Dictionary<string, EngineObject>();
                 foreach (var child in definitionsToken.Children())
                 {
                     var jProperty = child as JProperty;
-                    var engineObject = new EngineObject();
-                    definitions.Add(jProperty.Name, engineObject);
-                    logger.Debug($"Object name: {jProperty.Name}");
                     foreach (var subChild in child.Children())
                     {
+                        logger.Debug($"Object name: {jProperty.Name}");
                         var jObject = subChild as JObject;
-                        engineObject.Type = GetValueFromProperty<string>(jObject, "type");
-                        engineObject.Description = GetValueFromProperty<string>(jObject, "description");
+                        var engineObject = jObject.ToObject<EngineObject>();
+                        definitions.Add(jProperty.Name, engineObject);
                         var properties = GetValueFromProperty<JToken>(jObject, "properties");
                         if (properties == null)
                             properties = GetValueFromProperty<JToken>(jObject, "items");
@@ -65,7 +62,6 @@ namespace QlikApiParser
                                 var jPropProperty = prop as JProperty;
                                 var propName = jPropProperty.Name;
                                 logger.Debug($"Parameter name: {propName}");
-
                                 var parameter = new EngineParameter();
                                 if (propName == "$ref")
                                 {
@@ -81,6 +77,9 @@ namespace QlikApiParser
                                     parameter.Ref = GetValueFromProperty<string>(jSubObject, "$ref");
                                     if (parameter.Description != null && parameter.Description.Contains("The default value is"))
                                         parameter.DefaultValueFromDescription = parameter.DefaultValue;
+
+                                    if (parameter.Enum != null)
+                                        parameter.Type = parameter.GenerateEnumType();
                                 }
 
                                 engineObject.Parameters.Add(parameter);
@@ -97,10 +96,45 @@ namespace QlikApiParser
                 return null;
             }
         }
+
+        public void SaveToCSharp(Dictionary<string, EngineObject> definitions, string workDir, string name)
+        {
+            try
+            {
+                var fileContent = new StringBuilder();
+                fileContent.Append($"namespace {name}\r\n{{");
+                fileContent.AppendLine("#region Usings");
+                fileContent.AppendLine("using System;");
+                fileContent.AppendLine("#endregion");
+                
+                foreach (var objects in definitions)
+                {
+                    foreach (var parameter in objects.Value.Parameters)
+                    {
+                        
+                    }
+                }
+
+                fileContent.AppendLine("}}");
+                var savePath = Path.Combine(workDir, $"{name}.cs");
+                File.WriteAllText(savePath, fileContent.ToString());
+            }
+            catch (Exception ex)
+            {
+                logger.Error(ex);
+            }
+        }
+
+        public void SaveToTypeScript()
+        {
+
+        }
         #endregion
     }
 
     #region  Helper Classes
+    [JsonObject(ItemNullValueHandling = NullValueHandling.Ignore,
+                NamingStrategyType = typeof(CamelCaseNamingStrategy))]
     public class EngineObject
     {
         public string Type { get; set; }
@@ -118,9 +152,20 @@ namespace QlikApiParser
         public string Type { get; set; }
         public string DefaultValue { get; set; }
         public bool Required { get; set; }
+        public List<string> Enum { get; set; }
 
         public string DefaultValueFromDescription { get; set; }
         public string Ref { get; set; }
+
+        public string GenerateEnumType()
+        {
+            return $"{Name.ToUpperInvariant()}_ENUM";
+        }
+
+        public override string ToString()
+        {
+            return Name;
+        }
     }
     #endregion
 }

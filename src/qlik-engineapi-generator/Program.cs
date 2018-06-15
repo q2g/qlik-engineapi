@@ -7,6 +7,7 @@
     using System.Xml;
     using Microsoft.Extensions.PlatformAbstractions;
     using Newtonsoft.Json;
+    using Newtonsoft.Json.Linq;
     using NLog;
     using NLog.Config;
     #endregion
@@ -24,15 +25,25 @@
                 logger.Info("qlik-engineapi-generator");
                 logger.Info("load log options...");
                 SetLoggerSettings();
-                var workingFile = args?.FirstOrDefault() ?? null;
-                if (workingFile == null)
+                var origJsonFile = args?.FirstOrDefault() ?? null;
+                if (!File.Exists(origJsonFile))
                 {
-                    logger.Warn("No working file found.");
+                    logger.Warn("No working dir found.");
                     return;
                 }
+
+                var workDir = Path.GetDirectoryName(origJsonFile);
+                var files = Directory.GetFiles(workDir, "*.json", SearchOption.TopDirectoryOnly);
+                var name = Path.GetFileNameWithoutExtension(origJsonFile);
+                var changeJsonFile = files.FirstOrDefault(f => f.EndsWith($"{name}_change.json"));
+                var changeJsonObject = GetJsonObject(changeJsonFile);
+                var origJsonObject = GetJsonObject(origJsonFile);
+                origJsonObject.Merge(changeJsonObject);
+
                 logger.Info("Start parsing...");
-                var qlikApiReader = new QlikApiReader();
-                qlikApiReader.Parse(workingFile);
+                var qlikApiGenerator = new QlikApiGenerator();
+                var definitions = qlikApiGenerator.Parse(origJsonObject);
+                qlikApiGenerator.SaveToCSharp(definitions, workDir, "jsonrpcapi");
                 logger.Info("Finish");
             }
             catch (Exception ex)
@@ -42,6 +53,12 @@
         }
 
         #region Private Methods
+        private static JObject GetJsonObject(string fullname)
+        {
+            var json = File.ReadAllText(fullname);
+            return JObject.Parse(json);
+        }
+
         private static XmlReader GetXmlReader(string path)
         {
             var jsonContent = File.ReadAllText(path);
