@@ -23,12 +23,12 @@
             try
             {
                 logger.Info("qlik-engineapi-generator");
-                logger.Info("load log options...");
+                logger.Info("Load log options...");
                 SetLoggerSettings();
                 var origJsonFile = args?.FirstOrDefault() ?? null;
                 if (!File.Exists(origJsonFile))
                 {
-                    logger.Warn("No working dir found.");
+                    logger.Warn("No file was found. Please check the args.");
                     return;
                 }
 
@@ -43,12 +43,12 @@
                 logger.Info("Start parsing...");
                 var qlikApiGenerator = new QlikApiGenerator();
                 var definitions = qlikApiGenerator.Parse(origJsonObject);
-                qlikApiGenerator.SaveToCSharp(definitions, workDir, "jsonrpcapi");
+                qlikApiGenerator.SaveToCSharp(definitions, workDir, name);
                 logger.Info("Finish");
             }
             catch (Exception ex)
             {
-                logger.Error(ex, "APP ERROR");
+                logger.Error(ex, "The Application has an Error.");
             }
         }
 

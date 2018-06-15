@@ -10,6 +10,7 @@ namespace QlikApiParser
     using System.Collections.Generic;
     using Newtonsoft.Json.Serialization;
     using System.Text;
+    using System.ComponentModel;
     #endregion
 
     public class QlikApiGenerator
@@ -30,6 +31,55 @@ namespace QlikApiParser
             }
 
             return default(T);
+        }
+
+        private string IndentedText(string value, int layer)
+        {
+            if (layer <= 0)
+                return value;
+            var def = "    ";
+            var indent = String.Empty;
+            for (int i = 0; i < layer; i++)
+                indent += def;
+            return $"{indent}{value}";
+        }
+
+        private string GetParentName(JProperty token)
+        {
+            var parent = token?.Parent?.Parent as JProperty;
+            if (parent == null)
+                return null;
+            return parent.Name;
+        }
+
+        private string GetFormatedDescription(string description, int layer)
+        {
+            if (String.IsNullOrEmpty(description))
+                return null;
+
+            var desc = description;
+            desc = desc.Replace("&lt;", "<");
+            desc = desc.Replace("&gt;", ">");
+            desc = desc.Replace("\r\n", $"\r\n{IndentedText("/// ", layer)}");
+            desc = desc.Replace("\n", $"\r\n{IndentedText("/// ", layer)}");
+            return desc;
+        }
+
+        private string GetDotNetType(string type)
+        {
+            switch (type)
+            {
+                case "integer":
+                    return "int";
+                case "boolean":
+                    return "bool";
+                case "number":
+                    return "double";
+                case "object":
+                    return "JObject";
+                default:
+                    return type;
+            }
         }
         #endregion
 
@@ -65,6 +115,7 @@ namespace QlikApiParser
                                 var parameter = new EngineParameter();
                                 if (propName == "$ref")
                                 {
+                                    parameter.Name = GetParentName(jPropProperty);
                                     parameter.Ref = jPropProperty.First.Value<string>();
                                     logger.Debug($"REF: {parameter.Ref}");
                                 }
@@ -76,10 +127,18 @@ namespace QlikApiParser
                                     parameter.Name = propName;
                                     parameter.Ref = GetValueFromProperty<string>(jSubObject, "$ref");
                                     if (parameter.Description != null && parameter.Description.Contains("The default value is"))
-                                        parameter.DefaultValueFromDescription = parameter.DefaultValue;
+                                        parameter.DefaultValueFromDescription = parameter.Default;
 
                                     if (parameter.Enum != null)
                                         parameter.Type = parameter.GenerateEnumType();
+
+                                    if (parameter.Type == "array")
+                                    {
+                                        var arrayType = prop.First["items"]?.First?.First?.Value<string>() ?? null;
+                                        if (arrayType.StartsWith("#"))
+                                            arrayType = arrayType?.Split('/')?.LastOrDefault() ?? null;
+                                        parameter.ArrayType = arrayType;
+                                    }
                                 }
 
                                 engineObject.Parameters.Add(parameter);
@@ -102,22 +161,95 @@ namespace QlikApiParser
             try
             {
                 var fileContent = new StringBuilder();
-                fileContent.Append($"namespace {name}\r\n{{");
-                fileContent.AppendLine("#region Usings");
-                fileContent.AppendLine("using System;");
-                fileContent.AppendLine("#endregion");
-                
-                foreach (var objects in definitions)
+                fileContent.Append($"namespace {name}");
+                fileContent.AppendLine();
+                fileContent.AppendLine("{");
+                fileContent.AppendLine(IndentedText("#region Usings", 1));
+                fileContent.AppendLine(IndentedText("using System;", 1));
+                fileContent.AppendLine(IndentedText("using System.ComponentModel;", 1));
+
+                fileContent.AppendLine(IndentedText("#endregion", 1));
+                fileContent.AppendLine();
+
+                var classCount = 0;
+                foreach (var defObject in definitions)
                 {
-                    foreach (var parameter in objects.Value.Parameters)
+                    var oType = defObject.Value.Type;
+                    switch (oType)
                     {
-                        
+                        case "object":
+                        case "array":
+                            classCount++;
+                            fileContent.AppendLine(IndentedText($"public class {defObject.Key}<###implements###>", 1));
+                            fileContent.AppendLine(IndentedText("{<###classopen###>", 1));
+                            fileContent.AppendLine(IndentedText("<###region Properties###>", 2));
+                            var paraCount = 0;
+                            var implements = false;
+                            foreach (var parameter in defObject.Value.Parameters)
+                            {
+                                if (parameter.Name == "qIncludeInBookmark")
+                                    logger.Debug("jkljlkjlk");
+
+                                paraCount++;
+                                if (!String.IsNullOrEmpty(parameter.Description))
+                                {
+                                    fileContent.AppendLine(IndentedText("/// <summary>", 2));
+                                    fileContent.AppendLine(IndentedText($"/// {GetFormatedDescription(parameter.Description, 2)}", 2));
+                                    fileContent.AppendLine(IndentedText("/// </summary>", 2));
+                                }
+
+                                if (parameter.Default != null)
+                                    fileContent.AppendLine(IndentedText($"[DefaultValue({parameter.Default.ToLowerInvariant()})]", 2));
+
+                                if (oType == "array")
+                                {
+                                    var arrayType = parameter?.Ref?.Split('/')?.LastOrDefault() ?? null;
+                                    fileContent.Replace("<###implements###>", $" : List<{GetDotNetType(arrayType)}>;");
+                                    fileContent.Replace("<###region Properties###>", "");
+                                    fileContent.Replace("{<###classopen###>", "");
+                                    implements = true;
+                                }
+                                else if (parameter.Type == "array")
+                                {
+                                    fileContent.AppendLine(IndentedText($"public List<{GetDotNetType(parameter.ArrayType)}> {parameter.Name} {{ get; set; }}", 2));
+                                }
+                                else
+                                {
+                                    var propertyText = IndentedText($"public {GetDotNetType(parameter.Type)} {parameter.Name} {{ get; set; }}", 2);
+                                    if(parameter.Default != null )
+                                       propertyText += $" = {parameter.Default.ToLowerInvariant()};";
+                                    fileContent.AppendLine(propertyText);
+                                }
+
+                                fileContent.Replace("<###implements###>", "");
+                                fileContent.Replace("<###classopen###>", "");
+                                fileContent.Replace("<###region Properties###>", "#region Properties");
+
+                                if (paraCount < defObject.Value.Parameters.Count)
+                                    fileContent.AppendLine();
+                            }
+
+                            if (!implements)
+                            {
+                                fileContent.AppendLine(IndentedText("#endregion", 2));
+                                fileContent.AppendLine(IndentedText("}", 1));
+                            }
+
+                            if (classCount < definitions.Count)
+                                fileContent.AppendLine();
+                            break;
+                        default:
+                            logger.Error($"Unknown type {oType}");
+                            break;
                     }
                 }
 
-                fileContent.AppendLine("}}");
+                fileContent.AppendLine("}");
                 var savePath = Path.Combine(workDir, $"{name}.cs");
-                File.WriteAllText(savePath, fileContent.ToString());
+                var content = fileContent.ToString().Trim();
+                content = content.Replace("\r\n    \r\n        \r\n\r\n", "\r\n\r\n");
+                content = content.Replace("\n    \n        \n\n", "\n\n");
+                File.WriteAllText(savePath, content);
             }
             catch (Exception ex)
             {
@@ -150,9 +282,10 @@ namespace QlikApiParser
         public string Description { get; set; }
         public string Format { get; set; }
         public string Type { get; set; }
-        public string DefaultValue { get; set; }
+        public string Default { get; set; }
         public bool Required { get; set; }
         public List<string> Enum { get; set; }
+        public string ArrayType { get; set; }
 
         public string DefaultValueFromDescription { get; set; }
         public string Ref { get; set; }
