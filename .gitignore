@@ -290,3 +290,10 @@ __pycache__/
 /src/qlik-resources-nuget/*.ttf
 /src/qlik-resources-nuget/*.resx
 /src/qlik-resources-nuget/Translate*.cs
+
+#vscode
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
