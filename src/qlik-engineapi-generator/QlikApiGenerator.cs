@@ -52,6 +52,20 @@ namespace QlikApiParser
             return parent.Name;
         }
 
+        private Dictionary<string, int> GetEnumValues(JObject token)
+        {
+            var children = token.Children();
+            var results = new Dictionary<string, int>();
+            foreach (var child in children)
+            {
+                var jProperty = child as JProperty;
+                if (jProperty.Name != "type")
+                    results.Add(jProperty.Name, jProperty.First["value"].Value<int>());
+            }
+
+            return results;
+        }
+
         private string GetFormatedDescription(string description, int layer)
         {
             if (String.IsNullOrEmpty(description))
@@ -63,6 +77,17 @@ namespace QlikApiParser
             desc = desc.Replace("\r\n", $"\r\n{IndentedText("/// ", layer)}");
             desc = desc.Replace("\n", $"\r\n{IndentedText("/// ", layer)}");
             return desc;
+        }
+
+        private string GetFormatedEnumBlock(string name, Dictionary<string, int> values)
+        {
+            var builder = new StringBuilder();
+            builder.Append(IndentedText($"public enum {name}\r\n", 1));
+            builder.AppendLine(IndentedText("{", 1));
+            foreach (var enumValue in values)
+                builder.AppendLine(IndentedText($"{enumValue.Key} = {enumValue.Value},", 2));
+            builder.AppendLine(IndentedText("}", 1));
+            return builder.ToString().TrimEnd(',');
         }
 
         private string GetDotNetType(string type)
@@ -98,13 +123,28 @@ namespace QlikApiParser
                         logger.Debug($"Object name: {jProperty.Name}");
                         var jObject = subChild as JObject;
                         var engineObject = jObject.ToObject<EngineObject>();
+
+                        if (engineObject.Export == false)
+                            continue;
+
+                        if(jProperty.Name == "FieldAttributes")
+                           logger.Debug("jkljlkjk");
+
                         definitions.Add(jProperty.Name, engineObject);
                         var properties = GetValueFromProperty<JToken>(jObject, "properties");
                         if (properties == null)
                             properties = GetValueFromProperty<JToken>(jObject, "items");
 
                         if (properties == null)
-                            logger.Debug("No properties found. EMPTY");
+                            if (engineObject.Type == "enum")
+                            {
+                                logger.Debug("No properties, but enum found.");
+                                engineObject.Enums = GetEnumValues(jObject);
+                            }
+                            else
+                            {
+                                logger.Debug("No properties found. EMPTY");
+                            }
                         else
                         {
                             foreach (var prop in properties)
@@ -128,7 +168,7 @@ namespace QlikApiParser
                                     parameter.Ref = GetValueFromProperty<string>(jSubObject, "$ref");
                                     if (parameter.Description != null && parameter.Description.Contains("The default value is"))
                                         parameter.DefaultValueFromDescription = parameter.Default;
-
+                                        
                                     if (parameter.Enum != null)
                                         parameter.Type = parameter.GenerateEnumType();
 
@@ -167,13 +207,24 @@ namespace QlikApiParser
                 fileContent.AppendLine(IndentedText("#region Usings", 1));
                 fileContent.AppendLine(IndentedText("using System;", 1));
                 fileContent.AppendLine(IndentedText("using System.ComponentModel;", 1));
-
+                fileContent.AppendLine(IndentedText("using System.Linq;", 1));
+                fileContent.AppendLine(IndentedText("using System.Collections.Generic;", 1));
+                fileContent.AppendLine(IndentedText("#endregion", 1));
+                fileContent.AppendLine();
+                fileContent.AppendLine(IndentedText("#region Enums", 1));
+                fileContent.AppendLine("<###ENUMS###>");
                 fileContent.AppendLine(IndentedText("#endregion", 1));
                 fileContent.AppendLine();
 
                 var classCount = 0;
                 foreach (var defObject in definitions)
                 {
+                    if (defObject.Value.Export == false)
+                        continue;
+                    
+                    if(defObject.Key == "FieldAttributes")
+                      logger.Debug("nkljlkjlk");
+                  
                     var oType = defObject.Value.Type;
                     switch (oType)
                     {
@@ -187,9 +238,6 @@ namespace QlikApiParser
                             var implements = false;
                             foreach (var parameter in defObject.Value.Parameters)
                             {
-                                if (parameter.Name == "qIncludeInBookmark")
-                                    logger.Debug("jkljlkjlk");
-
                                 paraCount++;
                                 if (!String.IsNullOrEmpty(parameter.Description))
                                 {
@@ -198,8 +246,14 @@ namespace QlikApiParser
                                     fileContent.AppendLine(IndentedText("/// </summary>", 2));
                                 }
 
+                                var dValue = String.Empty;
                                 if (parameter.Default != null)
-                                    fileContent.AppendLine(IndentedText($"[DefaultValue({parameter.Default.ToLowerInvariant()})]", 2));
+                                {
+                                    dValue = parameter.Default.ToLowerInvariant();
+                                    if (parameter.Type.EndsWith("_ENUM"))
+                                        dValue = parameter.Default.ToUpperInvariant();
+                                    fileContent.AppendLine(IndentedText($"[DefaultValue({dValue})]", 2));
+                                }
 
                                 if (oType == "array")
                                 {
@@ -216,14 +270,18 @@ namespace QlikApiParser
                                 else
                                 {
                                     var propertyText = IndentedText($"public {GetDotNetType(parameter.Type)} {parameter.Name} {{ get; set; }}", 2);
-                                    if(parameter.Default != null )
-                                       propertyText += $" = {parameter.Default.ToLowerInvariant()};";
+                                    if (parameter.Default != null)
+                                        propertyText += $" = {dValue};";
                                     fileContent.AppendLine(propertyText);
                                 }
 
                                 fileContent.Replace("<###implements###>", "");
                                 fileContent.Replace("<###classopen###>", "");
                                 fileContent.Replace("<###region Properties###>", "#region Properties");
+
+                                // if(parameter.Enum != null)
+                                // var block = GetFormatedEnumBlock(defObject.Key, parameter.Enum);
+                                // fileContent.Replace("<###ENUMS###>", $"<###ENUMS###>{block}\r\n");
 
                                 if (paraCount < defObject.Value.Parameters.Count)
                                     fileContent.AppendLine();
@@ -238,12 +296,17 @@ namespace QlikApiParser
                             if (classCount < definitions.Count)
                                 fileContent.AppendLine();
                             break;
+                        case "enum":
+                            var enumBlock = GetFormatedEnumBlock(defObject.Key, defObject.Value.Enums);
+                            fileContent.Replace("<###ENUMS###>", $"<###ENUMS###>{enumBlock}\r\n");
+                            break;
                         default:
                             logger.Error($"Unknown type {oType}");
                             break;
                     }
                 }
 
+                fileContent.Replace("<###ENUMS###>", "");
                 fileContent.AppendLine("}");
                 var savePath = Path.Combine(workDir, $"{name}.cs");
                 var content = fileContent.ToString().Trim();
@@ -271,7 +334,9 @@ namespace QlikApiParser
     {
         public string Type { get; set; }
         public string Description { get; set; }
+        public bool Export { get; set; } = true;
         public List<EngineParameter> Parameters { get; set; } = new List<EngineParameter>();
+        public Dictionary<string, int> Enums { get; set; }
     }
 
     [JsonObject(ItemNullValueHandling = NullValueHandling.Ignore,
@@ -284,7 +349,8 @@ namespace QlikApiParser
         public string Type { get; set; }
         public string Default { get; set; }
         public bool Required { get; set; }
-        public List<string> Enum { get; set; }
+        public List<string> Enum {get; set;}
+        public Dictionary<int, string> Enums { get; set; }
         public string ArrayType { get; set; }
 
         public string DefaultValueFromDescription { get; set; }
