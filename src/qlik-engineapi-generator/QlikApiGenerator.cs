@@ -207,8 +207,9 @@ namespace QlikApiParser
                 fileContent.AppendLine(IndentedText("#region Usings", 1));
                 fileContent.AppendLine(IndentedText("using System;", 1));
                 fileContent.AppendLine(IndentedText("using System.ComponentModel;", 1));
-                fileContent.AppendLine(IndentedText("using System.Linq;", 1));
                 fileContent.AppendLine(IndentedText("using System.Collections.Generic;", 1));
+                fileContent.AppendLine(IndentedText("using Newtonsoft.Json;", 1));
+                fileContent.AppendLine(IndentedText("using Newtonsoft.Json.Linq;", 1));    
                 fileContent.AppendLine(IndentedText("#endregion", 1));
                 fileContent.AppendLine();
                 fileContent.AppendLine(IndentedText("#region Enums", 1));
@@ -258,7 +259,7 @@ namespace QlikApiParser
                                 if (oType == "array")
                                 {
                                     var arrayType = parameter?.Ref?.Split('/')?.LastOrDefault() ?? null;
-                                    fileContent.Replace("<###implements###>", $" : List<{GetDotNetType(arrayType)}>;");
+                                    fileContent.Replace("<###implements###>", $" : List<{GetDotNetType(arrayType)}> {{");
                                     fileContent.Replace("<###region Properties###>", "");
                                     fileContent.Replace("{<###classopen###>", "");
                                     implements = true;
@@ -289,9 +290,9 @@ namespace QlikApiParser
 
                             if (!implements)
                             {
-                                fileContent.AppendLine(IndentedText("#endregion", 2));
-                                fileContent.AppendLine(IndentedText("}", 1));
+                                fileContent.AppendLine(IndentedText("#endregion", 2));                                
                             }
+                            fileContent.AppendLine(IndentedText("}", 1));
 
                             if (classCount < definitions.Count)
                                 fileContent.AppendLine();
