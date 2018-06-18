@@ -205,6 +205,7 @@ namespace QlikApiParser
         {
             try
             {
+                var enumList = new List<string>();
                 var fileContent = new StringBuilder();
                 fileContent.Append($"namespace {name}");
                 fileContent.AppendLine();
@@ -285,7 +286,7 @@ namespace QlikApiParser
                                 if (parameter.Enum != null)
                                 {
                                     var dict = parameter.Enum.ToDictionary(x => x, x => -999999);
-                                    var block = GetFormatedEnumBlock(defObject.Key, dict);
+                                    var block = GetFormatedEnumBlock(parameter.Type, dict);
                                     fileContent.Replace("<###ENUMS###>", $"<###ENUMS###>{block}\r\n");
                                 }
 

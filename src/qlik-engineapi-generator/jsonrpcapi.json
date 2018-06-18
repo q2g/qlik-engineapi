@@ -8645,32 +8645,32 @@
                 "qSortByState": {
                     "type": "integer",
                     "description": "Sorts the field values according to their logical state (selected, optional, alternative or excluded).",
-                    "format": "int8"
+                    "format": "int"
                 },
                 "qSortByFrequency": {
                     "type": "integer",
                     "description": "Sorts the field values by frequency (number of occurrences in the field).",
-                    "format": "int8"
+                    "format": "int"
                 },
                 "qSortByNumeric": {
                     "type": "integer",
                     "description": "Sorts the field values by numeric value.",
-                    "format": "int8"
+                    "format": "int"
                 },
                 "qSortByAscii": {
                     "type": "integer",
                     "description": "Sorts the field by alphabetical order.",
-                    "format": "int8"
+                    "format": "int"
                 },
                 "qSortByLoadOrder": {
                     "type": "integer",
                     "description": "Sorts the field values by the initial load order.",
-                    "format": "int8"
+                    "format": "int"
                 },
                 "qSortByExpression": {
                     "type": "integer",
                     "description": "Sorts the field by expression.",
-                    "format": "int8"
+                    "format": "int"
                 },
                 "qExpression": {
                     "type": "object",
@@ -8679,7 +8679,7 @@
                 },
                 "qSortByGreyness": {
                     "type": "integer",
-                    "format": "int8"
+                    "format": "int"
                 }
             }
         },
