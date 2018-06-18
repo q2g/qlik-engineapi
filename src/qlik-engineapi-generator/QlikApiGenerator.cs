@@ -85,7 +85,15 @@ namespace QlikApiParser
             builder.Append(IndentedText($"public enum {name}\r\n", 1));
             builder.AppendLine(IndentedText("{", 1));
             foreach (var enumValue in values)
-                builder.AppendLine(IndentedText($"{enumValue.Key} = {enumValue.Value},", 2));
+            {
+                var eValue = enumValue.Value.ToString();
+                if (eValue == "-999999")
+                    eValue = null;
+                else
+                    eValue = $" = {eValue}";
+
+                builder.AppendLine(IndentedText($"{enumValue.Key}{eValue},", 2));
+            }
             builder.AppendLine(IndentedText("}", 1));
             return builder.ToString().TrimEnd(',');
         }
@@ -127,9 +135,6 @@ namespace QlikApiParser
                         if (engineObject.Export == false)
                             continue;
 
-                        if(jProperty.Name == "FieldAttributes")
-                           logger.Debug("jkljlkjk");
-
                         definitions.Add(jProperty.Name, engineObject);
                         var properties = GetValueFromProperty<JToken>(jObject, "properties");
                         if (properties == null)
@@ -168,7 +173,7 @@ namespace QlikApiParser
                                     parameter.Ref = GetValueFromProperty<string>(jSubObject, "$ref");
                                     if (parameter.Description != null && parameter.Description.Contains("The default value is"))
                                         parameter.DefaultValueFromDescription = parameter.Default;
-                                        
+
                                     if (parameter.Enum != null)
                                         parameter.Type = parameter.GenerateEnumType();
 
@@ -209,7 +214,7 @@ namespace QlikApiParser
                 fileContent.AppendLine(IndentedText("using System.ComponentModel;", 1));
                 fileContent.AppendLine(IndentedText("using System.Collections.Generic;", 1));
                 fileContent.AppendLine(IndentedText("using Newtonsoft.Json;", 1));
-                fileContent.AppendLine(IndentedText("using Newtonsoft.Json.Linq;", 1));    
+                fileContent.AppendLine(IndentedText("using Newtonsoft.Json.Linq;", 1));
                 fileContent.AppendLine(IndentedText("#endregion", 1));
                 fileContent.AppendLine();
                 fileContent.AppendLine(IndentedText("#region Enums", 1));
@@ -222,10 +227,7 @@ namespace QlikApiParser
                 {
                     if (defObject.Value.Export == false)
                         continue;
-                    
-                    if(defObject.Key == "FieldAttributes")
-                      logger.Debug("nkljlkjlk");
-                  
+
                     var oType = defObject.Value.Type;
                     switch (oType)
                     {
@@ -280,9 +282,12 @@ namespace QlikApiParser
                                 fileContent.Replace("<###classopen###>", "");
                                 fileContent.Replace("<###region Properties###>", "#region Properties");
 
-                                // if(parameter.Enum != null)
-                                // var block = GetFormatedEnumBlock(defObject.Key, parameter.Enum);
-                                // fileContent.Replace("<###ENUMS###>", $"<###ENUMS###>{block}\r\n");
+                                if (parameter.Enum != null)
+                                {
+                                    var dict = parameter.Enum.ToDictionary(x => x, x => -999999);
+                                    var block = GetFormatedEnumBlock(defObject.Key, dict);
+                                    fileContent.Replace("<###ENUMS###>", $"<###ENUMS###>{block}\r\n");
+                                }
 
                                 if (paraCount < defObject.Value.Parameters.Count)
                                     fileContent.AppendLine();
@@ -290,7 +295,7 @@ namespace QlikApiParser
 
                             if (!implements)
                             {
-                                fileContent.AppendLine(IndentedText("#endregion", 2));                                
+                                fileContent.AppendLine(IndentedText("#endregion", 2));
                             }
                             fileContent.AppendLine(IndentedText("}", 1));
 
@@ -350,8 +355,7 @@ namespace QlikApiParser
         public string Type { get; set; }
         public string Default { get; set; }
         public bool Required { get; set; }
-        public List<string> Enum {get; set;}
-        public Dictionary<int, string> Enums { get; set; }
+        public List<string> Enum { get; set; }
         public string ArrayType { get; set; }
 
         public string DefaultValueFromDescription { get; set; }
