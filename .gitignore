@@ -299,4 +299,4 @@ __pycache__/
 !.vscode/extensions.json
 
 #user file
-src/qlik-engineapi-generator/jsonrpcapi.json
+/src/qlik-engineapi-generator/jsonrpcapi.json
