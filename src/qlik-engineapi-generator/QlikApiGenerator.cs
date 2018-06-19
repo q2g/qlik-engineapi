@@ -19,6 +19,10 @@ namespace QlikApiParser
         private static readonly Logger logger = LogManager.GetCurrentClassLogger();
         #endregion
 
+        #region  Properties && Variables
+        private List<IEngineObject> EngineObjects = new List<IEngineObject>();
+        #endregion
+
         #region  private methods
         private T GetValueFromProperty<T>(JObject jObject, string name)
         {
@@ -27,7 +31,7 @@ namespace QlikApiParser
             {
                 var jProperty = child as JProperty;
                 if (jProperty.Name == name)
-                    return jProperty.First.Value<T>();
+                    return jProperty.First.ToObject<T>();
             }
 
             return default(T);
@@ -65,6 +69,22 @@ namespace QlikApiParser
             return desc;
         }
 
+        private string GetFormatedEnumBlock(EngineEnum enumObject)
+        {
+            var builder = new StringBuilder();
+            builder.Append(IndentedText($"public enum {enumObject.Name}\r\n", 1));
+            builder.AppendLine(IndentedText("{", 1));
+            foreach (var enumValue in enumObject.Values)
+            {
+                var eValue = enumValue.Name;
+                if (enumValue.Value.HasValue)
+                    eValue += $" = {eValue}";
+                builder.AppendLine(IndentedText($"{eValue},", 2));
+            }
+            builder.AppendLine(IndentedText("}", 1));
+            return builder.ToString().TrimEnd(',').TrimEnd();
+        }
+
         private string GetDotNetType(string type)
         {
             switch (type)
@@ -81,73 +101,149 @@ namespace QlikApiParser
                     return type;
             }
         }
+
+        private List<EngineProperty> ReadProperties(JObject jObject, string tokenName)
+        {
+            var results = new List<EngineProperty>();
+            try
+            {
+                var properties = GetValueFromProperty<JToken>(jObject, tokenName);
+                if (properties == null)
+                    return results;
+                foreach (var property in properties)
+                {
+                    var jprop = property as JProperty;
+                    logger.Debug($"Property name: {jprop.Name}");
+                    var engineProperty = new EngineProperty();
+                    dynamic propObject = null;
+                    if (property.First.Type == JTokenType.Object)
+                    {
+                        propObject = property.First as JObject;
+                        engineProperty = propObject.ToObject<EngineProperty>();
+                    }
+                    engineProperty.Name = jprop.Name;
+                    if (engineProperty.Description != null && engineProperty.Description.Contains("The default value is"))
+                        engineProperty.DefaultValueFromDescription = engineProperty.Default;
+                    if (jprop.Name == "$ref")
+                    {
+                        var refLink = jprop?.Value?.ToObject<string>() ?? null;
+                        logger.Debug($"Items Ref: {refLink}");
+                        engineProperty.Ref = refLink;
+                    }
+
+                    if (engineProperty.Type == "array")
+                    {
+                        var refValue = GetValueFromProperty<string>(propObject.items, "$ref");
+                        if (String.IsNullOrEmpty(refValue))
+                            refValue = propObject.items.type.ToObject<string>();
+                        engineProperty.Ref = refValue;
+                    }
+
+                    if (engineProperty.Enum != null)
+                    {
+                        engineProperty.Type = engineProperty.GenerateEnumType();
+                        engineProperty.IsEnumType = true;
+                        var engineEnum = new EngineEnum();
+                        engineEnum.Name = engineProperty.Type;
+                        foreach (var enumValue in engineProperty.Enum)
+                            engineEnum.Values.Add(new EngineEnumValue() { Name = enumValue });
+                        EngineObjects.Add(engineEnum);
+                    }
+
+                    results.Add(engineProperty);
+                }
+                return results;
+            }
+            catch (Exception ex)
+            {
+                logger.Error(ex, $"The method {nameof(ReadProperties)} failed.");
+                return results;
+            }
+        }
+
+        private List<EngineEnumValue> GetEnumValues(JObject token)
+        {
+            var results = new List<EngineEnumValue>();
+            try
+            {
+                var children = token.Children();
+                foreach (var child in children)
+                {
+                    dynamic jProperty = child as JProperty;
+                    if (jProperty.Name != "type")
+                    {
+                        EngineEnumValue enumValue = jProperty?.Value?.ToObject<EngineEnumValue>() ?? null;
+                        enumValue.Name = jProperty.Name;
+                        results.Add(enumValue);
+                    }
+                }
+                return results;
+            }
+            catch (Exception ex)
+            {
+                logger.Error(ex, $"The method {nameof(GetEnumValues)} failed.");
+                return results;
+            }
+        }
+
+        private string GetImplemention(EngineProperty property)
+        {
+            var result = new StringBuilder();
+            var arrayType = property?.Ref?.Split('/')?.LastOrDefault() ?? null;    
+            return  $" : List<{GetDotNetType(arrayType)}>";
+        }
         #endregion
 
         #region public methods
-        public Dictionary<string, EngineObject> Parse(JObject mergeObject)
+        public List<IEngineObject> Parse(JObject mergeObject)
         {
             try
             {
-                var definitionsToken = mergeObject["definitions"] as JObject;
-                var definitions = new Dictionary<string, EngineObject>();
-                foreach (var child in definitionsToken.Children())
+                EngineObjects.Clear();
+                var definitions = mergeObject["definitions"] as JObject;
+                foreach (var child in definitions.Children())
                 {
                     var jProperty = child as JProperty;
                     foreach (var subChild in child.Children())
                     {
                         logger.Debug($"Object name: {jProperty.Name}");
-                        var jObject = subChild as JObject;
-                        var engineObject = jObject.ToObject<EngineObject>();
-                        definitions.Add(jProperty.Name, engineObject);
-                        var properties = GetValueFromProperty<JToken>(jObject, "properties");
-                        if (properties == null)
-                            properties = GetValueFromProperty<JToken>(jObject, "items");
-
-                        if (properties == null)
-                            logger.Debug("No properties found. EMPTY");
-                        else
+                        dynamic jObject = subChild as JObject;
+                        var export = jObject?.export?.ToObject<bool>() ?? true;
+                        if (!export)
+                            continue;
+                        var objectType = jObject?.type?.ToString() ?? null;
+                        EngineClass engineClass = null;
+                        switch (objectType)
                         {
-                            foreach (var prop in properties)
-                            {
-                                var jPropProperty = prop as JProperty;
-                                var propName = jPropProperty.Name;
-                                logger.Debug($"Parameter name: {propName}");
-                                var parameter = new EngineParameter();
-                                if (propName == "$ref")
-                                {
-                                    parameter.Name = GetParentName(jPropProperty);
-                                    parameter.Ref = jPropProperty.First.Value<string>();
-                                    logger.Debug($"REF: {parameter.Ref}");
-                                }
-
-                                var jSubObject = prop.First as JObject;
-                                if (jSubObject != null)
-                                {
-                                    parameter = jSubObject.ToObject<EngineParameter>();
-                                    parameter.Name = propName;
-                                    parameter.Ref = GetValueFromProperty<string>(jSubObject, "$ref");
-                                    if (parameter.Description != null && parameter.Description.Contains("The default value is"))
-                                        parameter.DefaultValueFromDescription = parameter.Default;
-
-                                    if (parameter.Enum != null)
-                                        parameter.Type = parameter.GenerateEnumType();
-
-                                    if (parameter.Type == "array")
-                                    {
-                                        var arrayType = prop.First["items"]?.First?.First?.Value<string>() ?? null;
-                                        if (arrayType.StartsWith("#"))
-                                            arrayType = arrayType?.Split('/')?.LastOrDefault() ?? null;
-                                        parameter.ArrayType = arrayType;
-                                    }
-                                }
-
-                                engineObject.Parameters.Add(parameter);
-                            }
+                            case "object":
+                                engineClass = jObject.ToObject<EngineClass>();
+                                engineClass.Name = jProperty.Name;
+                                EngineObjects.Add(engineClass);
+                                var properties = ReadProperties(jObject, "properties");
+                                engineClass.Properties.AddRange(properties);
+                                break;
+                            case "array":
+                                engineClass = jObject.ToObject<EngineClass>();
+                                engineClass.Name = jProperty.Name;
+                                var arrays = ReadProperties(jObject, "items");
+                                engineClass.Properties.AddRange(arrays);
+                                EngineObjects.Add(engineClass);
+                                break;
+                            case "enum":
+                                EngineEnum engineEnum = jObject.ToObject<EngineEnum>();
+                                engineEnum.Name = jProperty.Name;
+                                var enums = GetEnumValues(jObject);
+                                engineEnum.Values = enums;
+                                EngineObjects.Add(engineEnum);
+                                break;
+                            default:
+                                logger.Error($"Unknown object type {objectType}");
+                                break;
                         }
                     }
                 }
 
-                return definitions;
+                return EngineObjects;
             }
             catch (Exception ex)
             {
@@ -156,10 +252,11 @@ namespace QlikApiParser
             }
         }
 
-        public void SaveToCSharp(Dictionary<string, EngineObject> definitions, string workDir, string name)
+        public void SaveToCSharp(List<IEngineObject> definitions, string workDir, string name)
         {
             try
             {
+                var enumList = new List<string>();
                 var fileContent = new StringBuilder();
                 fileContent.Append($"namespace {name}");
                 fileContent.AppendLine();
@@ -169,84 +266,85 @@ namespace QlikApiParser
                 fileContent.AppendLine(IndentedText("using System.ComponentModel;", 1));
                 fileContent.AppendLine(IndentedText("using System.Collections.Generic;", 1));
                 fileContent.AppendLine(IndentedText("using Newtonsoft.Json;", 1));
-                fileContent.AppendLine(IndentedText("using Newtonsoft.Json.Linq;", 1));    
+                fileContent.AppendLine(IndentedText("using Newtonsoft.Json.Linq;", 1));
                 fileContent.AppendLine(IndentedText("#endregion", 1));
                 fileContent.AppendLine();
-
-                var classCount = 0;
-                foreach (var defObject in definitions)
+                fileContent.AppendLine(IndentedText("#region Enums", 1));
+                var enumObjects = definitions.Where(d => d.EngType == EngineType.ENUM).ToList();
+                logger.Debug($"Write Enums {enumObjects.Count}");
+                var lineCounter = 0;
+                foreach (EngineEnum enumValue in enumObjects)
                 {
-                    var oType = defObject.Value.Type;
-                    switch (oType)
+                    lineCounter++;
+                    var enumResult = GetFormatedEnumBlock(enumValue);
+                    fileContent.AppendLine(enumResult);
+                    if (lineCounter < enumObjects.Count)
+                        fileContent.AppendLine();
+                }
+                fileContent.AppendLine(IndentedText("#endregion", 1));
+                fileContent.AppendLine();
+                fileContent.AppendLine(IndentedText("#region Classes", 1));
+                var classObjects = definitions.Where(d => d.EngType == EngineType.CLASS).ToList();
+                logger.Debug($"Write Classes {classObjects.Count}");
+                foreach (EngineClass classObject in classObjects)
+                {
+                    if (classObject.Name == "NxMetaDef")
+                        logger.Debug(",mm,m,");
+
+                    fileContent.AppendLine(IndentedText($"public class {classObject.Name}<###implements###>", 1));
+                    fileContent.AppendLine(IndentedText("{", 1));
+                    fileContent.AppendLine(IndentedText("#region Properties", 2));
+                    var propertyCount = 0;
+                    foreach (var property in classObject.Properties)
                     {
-                        case "object":
-                        case "array":
-                            classCount++;
-                            fileContent.AppendLine(IndentedText($"public class {defObject.Key}<###implements###>", 1));
-                            fileContent.AppendLine(IndentedText("{<###classopen###>", 1));
-                            fileContent.AppendLine(IndentedText("<###region Properties###>", 2));
-                            var paraCount = 0;
-                            var implements = false;
-                            foreach (var parameter in defObject.Value.Parameters)
-                            {
-                                if (parameter.Name == "qIncludeInBookmark")
-                                    logger.Debug("jkljlkjlk");
+                        propertyCount++;
+                        if (!String.IsNullOrEmpty(property.Description))
+                        {
+                            fileContent.AppendLine(IndentedText("/// <summary>", 2));
+                            fileContent.AppendLine(IndentedText($"/// {GetFormatedDescription(property.Description, 2)}", 2));
+                            fileContent.AppendLine(IndentedText("/// </summary>", 2));
+                        }
 
-                                paraCount++;
-                                if (!String.IsNullOrEmpty(parameter.Description))
-                                {
-                                    fileContent.AppendLine(IndentedText("/// <summary>", 2));
-                                    fileContent.AppendLine(IndentedText($"/// {GetFormatedDescription(parameter.Description, 2)}", 2));
-                                    fileContent.AppendLine(IndentedText("/// </summary>", 2));
-                                }
+                        var dValue = String.Empty;
+                        if (property.Default != null)
+                        {
+                            dValue = property.Default.ToLowerInvariant();
+                            if (property.IsEnumType)
+                                dValue = property.Default.ToUpperInvariant();
+                            fileContent.AppendLine(IndentedText($"[DefaultValue({dValue})]", 2));
+                        }
 
-                                if (parameter.Default != null)
-                                    fileContent.AppendLine(IndentedText($"[DefaultValue({parameter.Default.ToLowerInvariant()})]", 2));
+                        if (classObject.Type == "array")
+                        {
+                            var implements = GetImplemention(property);
+                            fileContent.Replace("<###implements###>", implements);
+                        }
 
-                                if (oType == "array")
-                                {
-                                    var arrayType = parameter?.Ref?.Split('/')?.LastOrDefault() ?? null;
-                                    fileContent.Replace("<###implements###>", $" : List<{GetDotNetType(arrayType)}> {{");
-                                    fileContent.Replace("<###region Properties###>", "");
-                                    fileContent.Replace("{<###classopen###>", "");
-                                    implements = true;
-                                }
-                                else if (parameter.Type == "array")
-                                {
-                                    fileContent.AppendLine(IndentedText($"public List<{GetDotNetType(parameter.ArrayType)}> {parameter.Name} {{ get; set; }}", 2));
-                                }
-                                else
-                                {
-                                    var propertyText = IndentedText($"public {GetDotNetType(parameter.Type)} {parameter.Name} {{ get; set; }}", 2);
-                                    if(parameter.Default != null )
-                                       propertyText += $" = {parameter.Default.ToLowerInvariant()};";
-                                    fileContent.AppendLine(propertyText);
-                                }
+                        if (property.Type == "array")
+                        {
+                            var refType = property.GetRefType();
+                            fileContent.AppendLine(IndentedText($"public List<{GetDotNetType(refType)}> {property.Name} {{ get; set; }}", 2));
+                        }
+                        else
+                        {
+                            var propertyText = IndentedText($"public {GetDotNetType(property.Type)} {property.Name} {{ get; set; }}", 2);
+                            if (property.Default != null)
+                                propertyText += $" = {dValue};";
+                            fileContent.AppendLine(propertyText);
+                        }
 
-                                fileContent.Replace("<###implements###>", "");
-                                fileContent.Replace("<###classopen###>", "");
-                                fileContent.Replace("<###region Properties###>", "#region Properties");
-
-                                if (paraCount < defObject.Value.Parameters.Count)
-                                    fileContent.AppendLine();
-                            }
-
-                            if (!implements)
-                            {
-                                fileContent.AppendLine(IndentedText("#endregion", 2));                                
-                            }
-                            fileContent.AppendLine(IndentedText("}", 1));
-
-                            if (classCount < definitions.Count)
-                                fileContent.AppendLine();
-                            break;
-                        default:
-                            logger.Error($"Unknown type {oType}");
-                            break;
+                        fileContent.Replace("<###implements###>", "");
+                        if (propertyCount < classObject.Properties.Count)
+                            fileContent.AppendLine();
                     }
+
+                    fileContent.AppendLine(IndentedText("#endregion", 2));
+                    fileContent.AppendLine(IndentedText("}", 1));
+                    fileContent.AppendLine();
                 }
 
                 fileContent.AppendLine("}");
+                fileContent.AppendLine(IndentedText("#endregion", 1));
                 var savePath = Path.Combine(workDir, $"{name}.cs");
                 var content = fileContent.ToString().Trim();
                 content = content.Replace("\r\n    \r\n        \r\n\r\n", "\r\n\r\n");
@@ -255,7 +353,7 @@ namespace QlikApiParser
             }
             catch (Exception ex)
             {
-                logger.Error(ex);
+                logger.Error(ex, $"The .NET file could not create.");
             }
         }
 
@@ -265,42 +363,4 @@ namespace QlikApiParser
         }
         #endregion
     }
-
-    #region  Helper Classes
-    [JsonObject(ItemNullValueHandling = NullValueHandling.Ignore,
-                NamingStrategyType = typeof(CamelCaseNamingStrategy))]
-    public class EngineObject
-    {
-        public string Type { get; set; }
-        public string Description { get; set; }
-        public List<EngineParameter> Parameters { get; set; } = new List<EngineParameter>();
-    }
-
-    [JsonObject(ItemNullValueHandling = NullValueHandling.Ignore,
-                NamingStrategyType = typeof(CamelCaseNamingStrategy))]
-    public class EngineParameter
-    {
-        public string Name { get; set; }
-        public string Description { get; set; }
-        public string Format { get; set; }
-        public string Type { get; set; }
-        public string Default { get; set; }
-        public bool Required { get; set; }
-        public List<string> Enum { get; set; }
-        public string ArrayType { get; set; }
-
-        public string DefaultValueFromDescription { get; set; }
-        public string Ref { get; set; }
-
-        public string GenerateEnumType()
-        {
-            return $"{Name.ToUpperInvariant()}_ENUM";
-        }
-
-        public override string ToString()
-        {
-            return Name;
-        }
-    }
-    #endregion
 }

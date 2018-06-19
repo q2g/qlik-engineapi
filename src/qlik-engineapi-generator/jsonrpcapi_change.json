@@ -1,0 +1,10 @@
+{
+    "definitions": {
+        "ObjectInterface": {
+            "type": "object"
+		},	
+	    "__NO_ENUM__": {
+            "export": "false"
+        }
+	}	
+}
