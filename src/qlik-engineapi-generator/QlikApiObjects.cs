@@ -9,6 +9,7 @@ namespace QlikApiParser
     using Newtonsoft.Json.Serialization;
     using System.ComponentModel;
     using System.Text;
+    using System.Text.RegularExpressions;
     #endregion
 
     #region  Helper Classes
@@ -57,11 +58,70 @@ namespace QlikApiParser
     }
 
     [JsonObject(ItemNullValueHandling = NullValueHandling.Ignore,
-                NamingStrategyType = typeof(CamelCaseNamingStrategy))]
-    public class EngineResponse : EngineAdvanced
+                    NamingStrategyType = typeof(CamelCaseNamingStrategy))]
+    public class EngineAdvancedTypes : EngineAdvanced
     {
+        public JObject Schema { get; set; }
+        public JObject Items { get; set; }
 
+        private string GetArrayType()
+        {
+            if (Items == null)
+                return Type;
+            var itemType = Items["type"]?.ToObject<string>() ?? null;
+            if (itemType == null)
+                return Type;
+            return $"List<{QlikApiUtils.GetDotNetType(itemType)}>";
+        }
+
+        private string GetSchemaType()
+        {
+            if (Schema == null)
+                return Type;
+            var result = Schema["$ref"]?.ToObject<string>() ?? null;
+            if (result == null)
+                return Type;
+            result = result?.Split('/')?.LastOrDefault() ?? null;
+            if (Type == "array")
+                return $"List<{QlikApiUtils.GetDotNetType(result)}>";
+            return result;
+        }
+
+        public string GetRealType()
+        {
+            var result = GetArrayType();
+            if (result == Type)
+                result = GetSchemaType();
+            return result;
+        }
+
+        public List<EngineEnum> GetEnums()
+        {
+            var results = new List<EngineEnum>();
+            if (Items != null)
+            {
+                var enumObj = Items["enum"] ?? null;
+                if (enumObj != null)
+                {
+                    var engineEnum = new EngineEnum();
+                    engineEnum.Name = Name;
+                    Type = Name;
+                    var childen = enumObj.Children();
+                    foreach (var child in childen)
+                    {
+                        var name = child.ToObject<string>();
+                        engineEnum.Values.Add(new EngineEnumValue() { Name = name });
+                    }
+                    results.Add(engineEnum);
+                }
+            }
+            return results;
+        }
     }
+
+    [JsonObject(ItemNullValueHandling = NullValueHandling.Ignore,
+                NamingStrategyType = typeof(CamelCaseNamingStrategy))]
+    public class EngineResponse : EngineAdvancedTypes { }
 
     public class EngineInterface : EngineBase, IEngineObject
     {
@@ -110,23 +170,34 @@ namespace QlikApiParser
                 var firstEnum = Values?.FirstOrDefault() ?? null;
                 if (firstEnum == null)
                     return;
-
                 var startText = String.Empty;
-                var chars = firstEnum.Name.ToCharArray();
-                foreach (var charValue in chars)
+                var blocks = firstEnum.Name.Split('_');
+                if (blocks.Length == 1)
+                    return;
+                var tempText = String.Empty;
+                foreach (var block in blocks)
                 {
-                    startText += charValue;
+                    startText += $"{block}_";
                     if (!StartWithText(startText))
-                    {
-                        startText = startText.TrimEnd(charValue);
                         break;
-                    }
+                    tempText = startText;
                 }
 
                 if (!String.IsNullOrEmpty(startText))
                 {
+                    var hitNumber = false;
                     foreach (var item in Values)
-                        item.Name = item.Name.Remove(0, startText.Length);
+                    {
+                        var testValue = item.Name.Remove(0, tempText.Length);
+                        if (Regex.IsMatch(testValue, "^[0-9]+"))
+                        {
+                            hitNumber = true;
+                            break;
+                        }
+                    }
+                    if (!hitNumber)
+                        foreach (var item in Values)
+                            item.Name = item.Name.Remove(0, tempText.Length);
                 }
             }
             catch (Exception ex)
@@ -145,39 +216,7 @@ namespace QlikApiParser
 
     [JsonObject(ItemNullValueHandling = NullValueHandling.Ignore,
                 NamingStrategyType = typeof(CamelCaseNamingStrategy))]
-    public class EngineParameter : EngineAdvanced
-    {
-        public JObject Schema { get; set; }
-        public JObject Items { get; set; }
-
-        private string GetArrayType()
-        {
-            if (Items == null)
-                return Type;
-            var itemType = Items["type"]?.ToObject<string>() ?? null;
-            if (itemType == null)
-                return Type;
-            return $"List<{QlikApiUtils.GetDotNetType(itemType)}>"; 
-        }
-
-        private string GetSchemaType()
-        {
-            if (Schema == null)
-                return Type;
-            var result = Schema["$ref"]?.ToObject<string>() ?? null;
-            if (result == null)
-                return Type;
-            return result?.Split('/')?.LastOrDefault() ?? null;
-        }
-
-        public string GetRealType()
-        {
-            var result = GetArrayType();
-            if(result == Type)
-               result = GetSchemaType();
-            return result;
-        }
-    }
+    public class EngineParameter : EngineAdvancedTypes { }
 
     [JsonObject(ItemNullValueHandling = NullValueHandling.Ignore,
                 NamingStrategyType = typeof(CamelCaseNamingStrategy))]

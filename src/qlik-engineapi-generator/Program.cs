@@ -51,7 +51,9 @@
                 qlikApiGenerator.ReadJson(origJsonObject);
                 qlikApiGenerator.SaveToCSharp (outputDir, name);
                 logger.Info ("Finish");
+                Environment.ExitCode = 0;
             } catch (Exception ex) {
+                Environment.ExitCode = 1;
                 logger.Error (ex, "The Application has an Error.");
             }
         }

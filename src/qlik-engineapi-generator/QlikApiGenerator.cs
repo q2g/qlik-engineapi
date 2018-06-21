@@ -45,6 +45,20 @@ namespace QlikApiParser
             return parent.Name;
         }
 
+        private string GetEnumDefault(string type, string defaultValue)
+        {
+            var enumObject = EngineObjects.FirstOrDefault(e => e.EngType == EngineType.ENUM && e.Name == type) as EngineEnum;
+            if (enumObject == null)
+                enumObject = EngineObjects.FirstOrDefault(e => e.EngType == EngineType.ENUM && type.StartsWith(e.Name)) as EngineEnum;
+
+            foreach (var value in enumObject.Values)
+            {
+                if (defaultValue.EndsWith(value.Name))
+                    return $"{enumObject.Name}.{value.Name}";
+            }
+            return $"{type}.{defaultValue}";
+        }
+
         private string GetFormatedEnumBlock(EngineEnum enumObject)
         {
             enumObject.RenameValues();
@@ -63,16 +77,18 @@ namespace QlikApiParser
             return builder.ToString().TrimEnd(',').TrimEnd();
         }
 
-        private bool EnumExists(EngineEnum engineEnum)
+        private EngineEnum EnumExists(EngineEnum engineEnum)
         {
             var results = EngineObjects.Where(o => o.EngType == engineEnum.EngType &&
                                                    o.Name.StartsWith(engineEnum.Name)).ToList();
             if (results.Count == 0)
-                return false;
+                return null;
 
             var hitCount = 0;
+            EngineEnum currentEnum = null;
             foreach (EngineEnum item in results)
             {
+                currentEnum = item;
                 foreach (var enumValue in engineEnum.Values)
                 {
                     var hit = item.Values.FirstOrDefault(v => v.Name == enumValue.Name);
@@ -82,8 +98,8 @@ namespace QlikApiParser
             }
 
             if (hitCount == engineEnum.Values.Count)
-                return true;
-            return false;
+                return currentEnum;
+            return null;
         }
 
         public string GenerateEnumType(string name)
@@ -139,9 +155,14 @@ namespace QlikApiParser
                         engineEnum.Name = engineProperty.Name;
                         foreach (var enumValue in engineProperty.Enum)
                             engineEnum.Values.Add(new EngineEnumValue() { Name = enumValue });
-                        if (!EnumExists(engineEnum))
+                        var enumResult = EnumExists(engineEnum);
+                        if (enumResult == null)
+                        {
                             EngineObjects.Add(engineEnum);
-                        engineEnum.Name = engineProperty.Type;
+                            engineEnum.Name = engineProperty.Type;
+                        }
+                        else 
+                           engineProperty.Type = enumResult.Name;
                     }
 
                     results.Add(engineProperty);
@@ -189,9 +210,6 @@ namespace QlikApiParser
 
         private string GetFormatedMethod(EngineMethod method)
         {
-            if (method.Name == "SetNxProperties")
-                logger.Debug("njlkjlkjlk");
-
             var response = method.Responses.FirstOrDefault() ?? null;
             var descBuilder = new DescritpionBuilder()
             {
@@ -205,19 +223,23 @@ namespace QlikApiParser
             var description = descBuilder.Generate(2);
             var returnType = "void";
             if (response != null)
-                returnType = QlikApiUtils.GetDotNetType(response.Type);
+            {
+                returnType = QlikApiUtils.GetDotNetType(response.GetRealType());
+                if (method?.Responses?.Count > 1)
+                {
+                    logger.Debug($"The method {method?.Name} has {method?.Responses?.Count} responses.");
+                    returnType = "JObject";
+                }
+            }
             var parameter = new StringBuilder();
             if (method.Parameters.Count > 0)
             {
                 foreach (var para in method.Parameters)
-                {
-                    parameter.Append($"{QlikApiUtils.GetDotNetType(para.Type)} ");
-                    parameter.Append($"{para.Name} ");
-                }
+                    parameter.Append($"{QlikApiUtils.GetDotNetType(para.Type)} {para.Name}, ");
             }
             var methodBuilder = new StringBuilder();
             methodBuilder.AppendLine(description);
-            methodBuilder.AppendLine(QlikApiUtils.Indented($"public {returnType} {method.Name}({parameter.ToString().TrimEnd()});", 2));
+            methodBuilder.AppendLine(QlikApiUtils.Indented($"{returnType} {method.Name}({parameter.ToString().TrimEnd().TrimEnd(',')});", 2));
             return methodBuilder.ToString();
         }
 
@@ -259,7 +281,7 @@ namespace QlikApiParser
                                 engineEnum.Name = jProperty.Name;
                                 var enums = GetEnumValues(jObject);
                                 engineEnum.Values = enums;
-                                if (!EnumExists(engineEnum))
+                                if (EnumExists(engineEnum) == null)
                                     EngineObjects.Add(engineEnum);
                                 break;
                             default:
@@ -301,17 +323,24 @@ namespace QlikApiParser
                             {
                                 var methodProp = method as JProperty;
                                 logger.Debug($"Method name: {methodProp.Name}");
-
-                                if (methodProp.Name == "GetListObjectData")
-                                    logger.Debug("kökpkpo");
-
                                 var engineMethod = method.First.ToObject<EngineMethod>();
                                 engineMethod.Name = methodProp.Name;
                                 var seeAlsoObject = method.First as JObject;
                                 if (seeAlsoObject != null)
                                     engineMethod.SeeAlso = GetValueFromProperty<List<string>>(seeAlsoObject, "x-qlik-see-also");
                                 foreach (var para in engineMethod.Parameters)
+                                {
                                     para.Type = para.GetRealType();
+                                    var enumList = para.GetEnums();
+                                    foreach (var item in enumList)
+                                    {
+                                        var enumValue = EnumExists(item);
+                                        if (enumValue == null)
+                                            EngineObjects.Add(item);
+                                        else
+                                            para.Type = enumValue.Name;
+                                    }
+                                }
                                 engineInterface.Methods.Add(engineMethod);
                             }
                         }
@@ -374,17 +403,17 @@ namespace QlikApiParser
                 var interfaceObjects = EngineObjects.Where(d => d.EngType == EngineType.INTERFACE).ToList();
                 logger.Debug($"Write Interfaces {interfaceObjects.Count}");
                 fileContent.AppendLine(QlikApiUtils.Indented("#region Interfaces", 1));
+                lineCounter = 0;
                 foreach (EngineInterface interfaceObject in interfaceObjects)
                 {
+                    lineCounter++;
                     fileContent.AppendLine(QlikApiUtils.Indented($"public interface {interfaceObject.Name}", 1));
                     fileContent.AppendLine(QlikApiUtils.Indented("{", 1));
                     foreach (var methodObject in interfaceObject.Methods)
-                    {
-                        if (methodObject.Responses.Count > 1)
-                            logger.Debug($"The method {methodObject.Name} has two or more responses.");
                         fileContent.AppendLine(GetFormatedMethod(methodObject));
-                    }
                     fileContent.AppendLine(QlikApiUtils.Indented("}", 1));
+                    if (lineCounter < interfaceObjects.Count)
+                        fileContent.AppendLine();
                 }
                 fileContent.AppendLine(QlikApiUtils.Indented("#endregion", 2));
                 fileContent.AppendLine();
@@ -410,7 +439,6 @@ namespace QlikApiParser
                                 {
                                     Summary = property.Description,
                                 };
-
                                 fileContent.AppendLine(builder.Generate(2));
                             }
 
@@ -419,7 +447,7 @@ namespace QlikApiParser
                             {
                                 dValue = property.Default.ToLowerInvariant();
                                 if (property.IsEnumType)
-                                    dValue = property.Default.ToUpperInvariant();
+                                    dValue = GetEnumDefault(property.Type, property.Default);
                                 fileContent.AppendLine(QlikApiUtils.Indented($"[DefaultValue({dValue})]", 2));
                             }
 
@@ -428,8 +456,7 @@ namespace QlikApiParser
                                 var implements = GetImplemention(property);
                                 fileContent.Replace("<###implements###>", implements);
                             }
-
-                            if (property.Type == "array")
+                            else if (property.Type == "array")
                             {
                                 var refType = property.GetRefType();
                                 fileContent.AppendLine(QlikApiUtils.Indented($"public List<{QlikApiUtils.GetDotNetType(refType)}> {property.Name} {{ get; set; }}", 2));
@@ -441,6 +468,7 @@ namespace QlikApiParser
                                     propertyText += $" = {dValue};";
                                 fileContent.AppendLine(propertyText);
                             }
+
                             if (propertyCount < classObject.Properties.Count)
                                 fileContent.AppendLine();
                         }
@@ -451,6 +479,7 @@ namespace QlikApiParser
                         fileContent.AppendLine();
                 }
                 fileContent.Replace("<###implements###>", "");
+                fileContent.AppendLine(QlikApiUtils.Indented("#endregion", 1));
                 fileContent.AppendLine("}");
                 var savePath = Path.Combine(workDir, $"{name}.cs");
                 var content = fileContent.ToString().Trim();

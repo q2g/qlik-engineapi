@@ -23,10 +23,10 @@ namespace QlikApiParser
                 indent += def;
             return $"{indent}{value}";
         }
-        
+
         public static string GetDotNetType(string type)
         {
-            switch (type)
+            switch (type?.ToLowerInvariant())
             {
                 case "integer":
                 case "int8":
@@ -37,6 +37,11 @@ namespace QlikApiParser
                     return "double";
                 case "object":
                     return "JObject";
+                case "nan":
+                    return "null";
+                case "-1e+300":
+                    return "double.NaN";
+
                 default:
                     return type;
             }
