@@ -48,10 +48,12 @@
 
                 logger.Info ("Start parsing...");
                 var qlikApiGenerator = new QlikApiGenerator ();
-                var definitions = qlikApiGenerator.Parse (origJsonObject);
-                qlikApiGenerator.SaveToCSharp (definitions, outputDir, name);
+                qlikApiGenerator.ReadJson(origJsonObject);
+                qlikApiGenerator.SaveToCSharp (outputDir, name);
                 logger.Info ("Finish");
+                Environment.ExitCode = 0;
             } catch (Exception ex) {
+                Environment.ExitCode = 1;
                 logger.Error (ex, "The Application has an Error.");
             }
         }
