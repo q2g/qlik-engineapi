@@ -221,14 +221,14 @@ namespace QlikApiParser
             if (response != null)
                 descBuilder.Return = response.Description;
             var description = descBuilder.Generate(2);
-            var returnType = "void";
+            var returnType = "Task";
             if (response != null)
             {
-                returnType = QlikApiUtils.GetDotNetType(response.GetRealType());
+                returnType = $"Task<{QlikApiUtils.GetDotNetType(response.GetRealType())}>";
                 if (method?.Responses?.Count > 1)
                 {
                     logger.Debug($"The method {method?.Name} has {method?.Responses?.Count} responses.");
-                    returnType = "JObject";
+                    returnType = "Task<JObject>";
                 }
             }
             var parameter = new StringBuilder();
@@ -239,7 +239,7 @@ namespace QlikApiParser
             }
             var methodBuilder = new StringBuilder();
             methodBuilder.AppendLine(description);
-            methodBuilder.AppendLine(QlikApiUtils.Indented($"Task<{returnType}> {method.Name}({parameter.ToString().TrimEnd().TrimEnd(',')});", 2));
+            methodBuilder.AppendLine(QlikApiUtils.Indented($"{returnType} {method.Name}({parameter.ToString().TrimEnd().TrimEnd(',')});", 2));
             return methodBuilder.ToString();
         }
 
