@@ -121,10 +121,7 @@ namespace QlikApiParser
 
     [JsonObject(ItemNullValueHandling = NullValueHandling.Ignore,
                 NamingStrategyType = typeof(CamelCaseNamingStrategy))]
-    public class EngineResponse : EngineAdvancedTypes 
-    {
-        //???
-    }
+    public class EngineResponse : EngineAdvancedTypes { }
 
     public class EngineInterface : EngineBase, IEngineObject
     {
