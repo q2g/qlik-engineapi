@@ -11,6 +11,7 @@ namespace QlikApiParser
     using Newtonsoft.Json.Serialization;
     using System.Text;
     using System.ComponentModel;
+    using System.Threading.Tasks;
     #endregion
 
     public class QlikApiGenerator
@@ -161,8 +162,8 @@ namespace QlikApiParser
                             EngineObjects.Add(engineEnum);
                             engineEnum.Name = engineProperty.Type;
                         }
-                        else 
-                           engineProperty.Type = enumResult.Name;
+                        else
+                            engineProperty.Type = enumResult.Name;
                     }
 
                     results.Add(engineProperty);
@@ -384,6 +385,7 @@ namespace QlikApiParser
                 fileContent.AppendLine(QlikApiUtils.Indented("using System.Collections.Generic;", 1));
                 fileContent.AppendLine(QlikApiUtils.Indented("using Newtonsoft.Json;", 1));
                 fileContent.AppendLine(QlikApiUtils.Indented("using Newtonsoft.Json.Linq;", 1));
+                fileContent.AppendLine(QlikApiUtils.Indented("using System.Threading.Tasks;", 1));
                 fileContent.AppendLine(QlikApiUtils.Indented("#endregion", 1));
                 fileContent.AppendLine();
                 fileContent.AppendLine(QlikApiUtils.Indented("#region Enums", 1));
