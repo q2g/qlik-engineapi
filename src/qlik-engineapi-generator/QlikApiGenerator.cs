@@ -239,7 +239,7 @@ namespace QlikApiParser
             }
             var methodBuilder = new StringBuilder();
             methodBuilder.AppendLine(description);
-            methodBuilder.AppendLine(QlikApiUtils.Indented($"{returnType} {method.Name}({parameter.ToString().TrimEnd().TrimEnd(',')});", 2));
+            methodBuilder.AppendLine(QlikApiUtils.Indented($"Task<{returnType}> {method.Name}({parameter.ToString().TrimEnd().TrimEnd(',')});", 2));
             return methodBuilder.ToString();
         }
 
@@ -451,9 +451,10 @@ namespace QlikApiParser
                                 fileContent.AppendLine(QlikApiUtils.Indented($"[DefaultValue({dValue})]", 2));
                             }
 
+                            var implements = String.Empty;
                             if (classObject.Type == "array")
                             {
-                                var implements = GetImplemention(property);
+                                implements = GetImplemention(property);
                                 fileContent.Replace("<###implements###>", implements);
                             }
                             else if (property.Type == "array")
@@ -469,6 +470,7 @@ namespace QlikApiParser
                                 fileContent.AppendLine(propertyText);
                             }
 
+                            fileContent.Replace("<###implements###>", "");
                             if (propertyCount < classObject.Properties.Count)
                                 fileContent.AppendLine();
                         }
@@ -478,7 +480,6 @@ namespace QlikApiParser
                     if (lineCounter < classObjects.Count)
                         fileContent.AppendLine();
                 }
-                fileContent.Replace("<###implements###>", "");
                 fileContent.AppendLine(QlikApiUtils.Indented("#endregion", 1));
                 fileContent.AppendLine("}");
                 var savePath = Path.Combine(workDir, $"{name}.cs");
