@@ -11,7 +11,9 @@
             "preLaunchTask": "build",
             // If you have changed target frameworks, make sure to update the program path.
             "program": "${workspaceFolder}/bin/Debug/netcoreapp2.0/qlik-engineapi-generator.dll",
-            "args": ["${workspaceFolder}/bin/Debug/netcoreapp2.0/jsonrpcapi.json", "${workspaceFolder}/../qlik-engineapi-nuget/"],
+            //ARGS: SourceFile, OutputFolder, UseDescription, UseQlikResponse, NamespaceName
+            "args": ["${workspaceFolder}/bin/Debug/netcoreapp2.0/jsonrpcapi.json", 
+                     "${workspaceFolder}/../qlik-engineapi-nuget/", "true", "true", "jsonrpcapi"],
             "cwd": "${workspaceFolder}/bin/Debug/netcoreapp2.0/",
             // For more information about the 'console' field, see https://github.com/OmniSharp/omnisharp-vscode/blob/master/debugger-launchjson.md#console-terminal-window
             "console": "internalConsole",

@@ -55,6 +55,36 @@ namespace QlikApiParser
         public List<EngineParameter> Parameters { get; set; } = new List<EngineParameter>();
         public List<EngineResponse> Responses { get; set; } = new List<EngineResponse>();
         public List<string> SeeAlso { get; set; }
+
+        public EngineClass GetMultipleClass()
+        {
+            try
+            {
+                var className = $"{Name}Response";
+                var result = new EngineClass()
+                {
+                    Name = className,
+                    Type = "object",
+                };
+                foreach (var response in Responses)
+                {
+                    var engineProprty = new EngineProperty()
+                    {
+                        Name = response.Name,
+                        Description = response.Description,
+                        Type = QlikApiUtils.GetDotNetType(response.GetRealType()),
+                        Required = response.Required,
+                        Format = response.Format,
+                    };
+                    result.Properties.Add(engineProprty);
+                }
+                return result;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("The method \"GetMultipleClass\" was failed.", ex);
+            }
+        }
     }
 
     [JsonObject(ItemNullValueHandling = NullValueHandling.Ignore,
@@ -254,6 +284,12 @@ namespace QlikApiParser
         public List<string> SeeAlso { get; set; } = new List<string>();
         public List<EngineParameter> Param { get; set; } = new List<EngineParameter>();
         public string Return { get; set; }
+        private bool UseDescription {get; set;}
+
+        public DescritpionBuilder(bool useDescription)
+        {
+             UseDescription = useDescription;
+        }
 
         private string GetName(string name, Tuple<string, string> args = null)
         {
@@ -287,6 +323,9 @@ namespace QlikApiParser
         {
             try
             {
+                if(UseDescription == false)
+                  return null;
+                
                 var builder = new StringBuilder();
                 if (!String.IsNullOrEmpty(Summary))
                     builder.AppendLine(GetFormatedList(Summary.Split('\n').ToList(), "summary", layer));

@@ -11,6 +11,7 @@ namespace QlikApiParser
     using Newtonsoft.Json.Serialization;
     using System.Text;
     using System.ComponentModel;
+    using System.Threading.Tasks;
     #endregion
 
     public class QlikApiGenerator
@@ -21,7 +22,13 @@ namespace QlikApiParser
 
         #region  Properties && Variables
         private List<IEngineObject> EngineObjects = new List<IEngineObject>();
+        private QlikApiConfig Config;
         #endregion
+
+        public QlikApiGenerator(QlikApiConfig config)
+        {
+            Config = config;
+        }
 
         #region  private methods
         private T GetValueFromProperty<T>(JObject jObject, string name)
@@ -132,6 +139,11 @@ namespace QlikApiParser
                     engineProperty.Name = jprop.Name;
                     if (engineProperty.Description != null && engineProperty.Description.Contains("The default value is"))
                         engineProperty.DefaultValueFromDescription = engineProperty.Default;
+
+                    var refValue = GetValueFromProperty<string>(propObject, "$ref");
+                    if (!String.IsNullOrEmpty(refValue))
+                        engineProperty.Ref = refValue;
+
                     if (jprop.Name == "$ref")
                     {
                         var refLink = jprop?.Value?.ToObject<string>() ?? null;
@@ -141,7 +153,7 @@ namespace QlikApiParser
 
                     if (engineProperty.Type == "array")
                     {
-                        var refValue = GetValueFromProperty<string>(propObject.items, "$ref");
+                        refValue = GetValueFromProperty<string>(propObject.items, "$ref");
                         if (String.IsNullOrEmpty(refValue))
                             refValue = propObject.items.type.ToObject<string>();
                         engineProperty.Ref = refValue;
@@ -161,8 +173,8 @@ namespace QlikApiParser
                             EngineObjects.Add(engineEnum);
                             engineEnum.Name = engineProperty.Type;
                         }
-                        else 
-                           engineProperty.Type = enumResult.Name;
+                        else
+                            engineProperty.Type = enumResult.Name;
                     }
 
                     results.Add(engineProperty);
@@ -211,7 +223,7 @@ namespace QlikApiParser
         private string GetFormatedMethod(EngineMethod method)
         {
             var response = method.Responses.FirstOrDefault() ?? null;
-            var descBuilder = new DescritpionBuilder()
+            var descBuilder = new DescritpionBuilder(Config.UseDescription)
             {
                 Summary = method.Description,
                 SeeAlso = method.SeeAlso,
@@ -221,14 +233,16 @@ namespace QlikApiParser
             if (response != null)
                 descBuilder.Return = response.Description;
             var description = descBuilder.Generate(2);
-            var returnType = "void";
+            var returnType = "Task";
             if (response != null)
             {
-                returnType = QlikApiUtils.GetDotNetType(response.GetRealType());
-                if (method?.Responses?.Count > 1)
+                returnType = $"Task<{QlikApiUtils.GetDotNetType(response.GetRealType())}>";
+                if (method?.Responses?.Count > 1 || !Config.UseQlikResponseLogic)
                 {
                     logger.Debug($"The method {method?.Name} has {method?.Responses?.Count} responses.");
-                    returnType = "JObject";
+                    var resultClass = method.GetMultipleClass();
+                    EngineObjects.Add(resultClass);
+                    returnType = $"Task<{resultClass.Name}>";
                 }
             }
             var parameter = new StringBuilder();
@@ -238,7 +252,8 @@ namespace QlikApiParser
                     parameter.Append($"{QlikApiUtils.GetDotNetType(para.Type)} {para.Name}, ");
             }
             var methodBuilder = new StringBuilder();
-            methodBuilder.AppendLine(description);
+            if (!String.IsNullOrEmpty(description))
+                methodBuilder.AppendLine(description);
             methodBuilder.AppendLine(QlikApiUtils.Indented($"{returnType} {method.Name}({parameter.ToString().TrimEnd().TrimEnd(',')});", 2));
             return methodBuilder.ToString();
         }
@@ -355,27 +370,29 @@ namespace QlikApiParser
         #endregion
 
         #region public methods
-        public void ReadJson(JObject mergeObject)
+        public List<IEngineObject> ReadJson(JObject mergeObject)
         {
             try
             {
                 EngineObjects.Clear();
                 AddDefinitions(mergeObject);
                 AddMethods(mergeObject);
+                return EngineObjects;
             }
             catch (Exception ex)
             {
                 logger.Error(ex, "The json could not parse.");
+                return null;
             }
         }
 
-        public void SaveToCSharp(string workDir, string name)
+        public void SaveToCSharp(QlikApiConfig config, List<IEngineObject> engineObjects, string savePath)
         {
             try
             {
                 var enumList = new List<string>();
                 var fileContent = new StringBuilder();
-                fileContent.Append($"namespace {name}");
+                fileContent.Append($"namespace {config.NamespaceName}");
                 fileContent.AppendLine();
                 fileContent.AppendLine("{");
                 fileContent.AppendLine(QlikApiUtils.Indented("#region Usings", 1));
@@ -384,104 +401,119 @@ namespace QlikApiParser
                 fileContent.AppendLine(QlikApiUtils.Indented("using System.Collections.Generic;", 1));
                 fileContent.AppendLine(QlikApiUtils.Indented("using Newtonsoft.Json;", 1));
                 fileContent.AppendLine(QlikApiUtils.Indented("using Newtonsoft.Json.Linq;", 1));
+                fileContent.AppendLine(QlikApiUtils.Indented("using System.Threading.Tasks;", 1));
                 fileContent.AppendLine(QlikApiUtils.Indented("#endregion", 1));
                 fileContent.AppendLine();
-                fileContent.AppendLine(QlikApiUtils.Indented("#region Enums", 1));
-                var enumObjects = EngineObjects.Where(d => d.EngType == EngineType.ENUM).ToList();
-                logger.Debug($"Write Enums {enumObjects.Count}");
                 var lineCounter = 0;
-                foreach (EngineEnum enumValue in enumObjects)
+                var enumObjects = engineObjects.Where(d => d.EngType == EngineType.ENUM).ToList();
+                if (enumObjects.Count > 0)
                 {
-                    lineCounter++;
-                    var enumResult = GetFormatedEnumBlock(enumValue);
-                    fileContent.AppendLine(enumResult);
-                    if (lineCounter < enumObjects.Count)
-                        fileContent.AppendLine();
-                }
-                fileContent.AppendLine(QlikApiUtils.Indented("#endregion", 1));
-                fileContent.AppendLine();
-                var interfaceObjects = EngineObjects.Where(d => d.EngType == EngineType.INTERFACE).ToList();
-                logger.Debug($"Write Interfaces {interfaceObjects.Count}");
-                fileContent.AppendLine(QlikApiUtils.Indented("#region Interfaces", 1));
-                lineCounter = 0;
-                foreach (EngineInterface interfaceObject in interfaceObjects)
-                {
-                    lineCounter++;
-                    fileContent.AppendLine(QlikApiUtils.Indented($"public interface {interfaceObject.Name}", 1));
-                    fileContent.AppendLine(QlikApiUtils.Indented("{", 1));
-                    foreach (var methodObject in interfaceObject.Methods)
-                        fileContent.AppendLine(GetFormatedMethod(methodObject));
-                    fileContent.AppendLine(QlikApiUtils.Indented("}", 1));
-                    if (lineCounter < interfaceObjects.Count)
-                        fileContent.AppendLine();
-                }
-                fileContent.AppendLine(QlikApiUtils.Indented("#endregion", 2));
-                fileContent.AppendLine();
-                fileContent.AppendLine(QlikApiUtils.Indented("#region Classes", 1));
-                var classObjects = EngineObjects.Where(d => d.EngType == EngineType.CLASS).ToList();
-                logger.Debug($"Write Classes {classObjects.Count}");
-                lineCounter = 0;
-                foreach (EngineClass classObject in classObjects)
-                {
-                    lineCounter++;
-                    fileContent.AppendLine(QlikApiUtils.Indented($"public class {classObject.Name}<###implements###>", 1));
-                    fileContent.AppendLine(QlikApiUtils.Indented("{", 1));
-                    if (classObject.Properties.Count > 0)
+                    fileContent.AppendLine(QlikApiUtils.Indented("#region Enums", 1));
+                    logger.Debug($"Write Enums {enumObjects.Count}");
+                    foreach (EngineEnum enumValue in enumObjects)
                     {
-                        fileContent.AppendLine(QlikApiUtils.Indented("#region Properties", 2));
-                        var propertyCount = 0;
-                        foreach (var property in classObject.Properties)
-                        {
-                            propertyCount++;
-                            if (!String.IsNullOrEmpty(property.Description))
-                            {
-                                var builder = new DescritpionBuilder()
-                                {
-                                    Summary = property.Description,
-                                };
-                                fileContent.AppendLine(builder.Generate(2));
-                            }
-
-                            var dValue = String.Empty;
-                            if (property.Default != null)
-                            {
-                                dValue = property.Default.ToLowerInvariant();
-                                if (property.IsEnumType)
-                                    dValue = GetEnumDefault(property.Type, property.Default);
-                                fileContent.AppendLine(QlikApiUtils.Indented($"[DefaultValue({dValue})]", 2));
-                            }
-
-                            if (classObject.Type == "array")
-                            {
-                                var implements = GetImplemention(property);
-                                fileContent.Replace("<###implements###>", implements);
-                            }
-                            else if (property.Type == "array")
-                            {
-                                var refType = property.GetRefType();
-                                fileContent.AppendLine(QlikApiUtils.Indented($"public List<{QlikApiUtils.GetDotNetType(refType)}> {property.Name} {{ get; set; }}", 2));
-                            }
-                            else
-                            {
-                                var propertyText = QlikApiUtils.Indented($"public {QlikApiUtils.GetDotNetType(property.Type)} {property.Name} {{ get; set; }}", 2);
-                                if (property.Default != null)
-                                    propertyText += $" = {dValue};";
-                                fileContent.AppendLine(propertyText);
-                            }
-
-                            if (propertyCount < classObject.Properties.Count)
-                                fileContent.AppendLine();
-                        }
-                        fileContent.AppendLine(QlikApiUtils.Indented("#endregion", 2));
+                        lineCounter++;
+                        var enumResult = GetFormatedEnumBlock(enumValue);
+                        fileContent.AppendLine(enumResult);
+                        if (lineCounter < enumObjects.Count)
+                            fileContent.AppendLine();
                     }
-                    fileContent.AppendLine(QlikApiUtils.Indented("}", 1));
-                    if (lineCounter < classObjects.Count)
-                        fileContent.AppendLine();
+                    fileContent.AppendLine(QlikApiUtils.Indented("#endregion", 1));
+                    fileContent.AppendLine();
                 }
-                fileContent.Replace("<###implements###>", "");
+                var interfaceObjects = engineObjects.Where(d => d.EngType == EngineType.INTERFACE).ToList();
+                if (interfaceObjects.Count > 0)
+                {
+                    logger.Debug($"Write Interfaces {interfaceObjects.Count}");
+                    fileContent.AppendLine(QlikApiUtils.Indented("#region Interfaces", 1));
+                    lineCounter = 0;
+                    foreach (EngineInterface interfaceObject in interfaceObjects)
+                    {
+                        lineCounter++;
+                        fileContent.AppendLine(QlikApiUtils.Indented($"public interface {interfaceObject.Name}", 1));
+                        fileContent.AppendLine(QlikApiUtils.Indented("{", 1));
+                        foreach (var methodObject in interfaceObject.Methods)
+                            fileContent.AppendLine(GetFormatedMethod(methodObject));
+                        fileContent.AppendLine(QlikApiUtils.Indented("}", 1));
+                        if (lineCounter < interfaceObjects.Count)
+                            fileContent.AppendLine();
+                    }
+                    fileContent.AppendLine(QlikApiUtils.Indented("#endregion", 2));
+                    fileContent.AppendLine();
+                }
+                var classObjects = engineObjects.Where(d => d.EngType == EngineType.CLASS).ToList();
+                if (classObjects.Count > 0)
+                {
+                    fileContent.AppendLine(QlikApiUtils.Indented("#region Classes", 1));
+                    logger.Debug($"Write Classes {classObjects.Count}");
+                    lineCounter = 0;
+                    foreach (EngineClass classObject in classObjects)
+                    {
+                        lineCounter++;
+                        fileContent.AppendLine(QlikApiUtils.Indented($"public class {classObject.Name}<###implements###>", 1));
+                        fileContent.AppendLine(QlikApiUtils.Indented("{", 1));
+                        if (classObject.Properties.Count > 0)
+                        {
+                            fileContent.AppendLine(QlikApiUtils.Indented("#region Properties", 2));
+                            var propertyCount = 0;
+                            foreach (var property in classObject.Properties)
+                            {
+                                propertyCount++;
+                                if (!String.IsNullOrEmpty(property.Description))
+                                {
+                                    var builder = new DescritpionBuilder(Config.UseDescription)
+                                    {
+                                        Summary = property.Description,
+                                    };
+                                    var description = builder.Generate(2);
+                                    if (!String.IsNullOrEmpty(description))
+                                        fileContent.AppendLine(description);
+                                }
+
+                                var dValue = String.Empty;
+                                if (property.Default != null)
+                                {
+                                    dValue = property.Default.ToLowerInvariant();
+                                    if (property.IsEnumType)
+                                        dValue = GetEnumDefault(property.Type, property.Default);
+                                    fileContent.AppendLine(QlikApiUtils.Indented($"[DefaultValue({dValue})]", 2));
+                                }
+
+                                var implements = String.Empty;
+                                var refType = property.GetRefType();
+                                if (classObject.Type == "array")
+                                {
+                                    implements = GetImplemention(property);
+                                    fileContent.Replace("<###implements###>", implements);
+                                }
+                                else if (property.Type == "array")
+                                {
+                                    fileContent.AppendLine(QlikApiUtils.Indented($"public List<{QlikApiUtils.GetDotNetType(refType)}> {property.Name} {{ get; set; }}", 2));
+                                }
+                                else
+                                {
+                                    var resultType = QlikApiUtils.GetDotNetType(property.Type);
+                                    if (!String.IsNullOrEmpty(refType))
+                                        resultType = refType;
+                                    var propertyText = QlikApiUtils.Indented($"public {resultType} {property.Name} {{ get; set; }}", 2);
+                                    if (property.Default != null)
+                                        propertyText += $" = {dValue};";
+                                    fileContent.AppendLine(propertyText);
+                                }
+
+                                fileContent.Replace("<###implements###>", "");
+                                if (propertyCount < classObject.Properties.Count)
+                                    fileContent.AppendLine();
+                            }
+                            fileContent.AppendLine(QlikApiUtils.Indented("#endregion", 2));
+                        }
+                        fileContent.AppendLine(QlikApiUtils.Indented("}", 1));
+                        if (lineCounter < classObjects.Count)
+                            fileContent.AppendLine();
+                    }
+                }
                 fileContent.AppendLine(QlikApiUtils.Indented("#endregion", 1));
                 fileContent.AppendLine("}");
-                var savePath = Path.Combine(workDir, $"{name}.cs");
                 var content = fileContent.ToString().Trim();
                 File.WriteAllText(savePath, content);
             }
