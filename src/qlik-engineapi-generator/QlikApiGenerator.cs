@@ -501,18 +501,18 @@ namespace QlikApiParser
                                     fileContent.AppendLine(propertyText);
                                 }
 
-                                fileContent.Replace("<###implements###>", "");
                                 if (propertyCount < classObject.Properties.Count)
                                     fileContent.AppendLine();
                             }
                             fileContent.AppendLine(QlikApiUtils.Indented("#endregion", 2));
                         }
+                        fileContent.Replace("<###implements###>", "");
                         fileContent.AppendLine(QlikApiUtils.Indented("}", 1));
                         if (lineCounter < classObjects.Count)
                             fileContent.AppendLine();
                     }
+                    fileContent.AppendLine(QlikApiUtils.Indented("#endregion", 1));
                 }
-                fileContent.AppendLine(QlikApiUtils.Indented("#endregion", 1));
                 fileContent.AppendLine("}");
                 var content = fileContent.ToString().Trim();
                 File.WriteAllText(savePath, content);
