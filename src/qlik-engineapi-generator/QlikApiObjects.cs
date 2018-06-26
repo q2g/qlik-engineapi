@@ -32,6 +32,7 @@ namespace QlikApiParser
     {
         public string Name { get; set; }
         public string Description { get; set; }
+        public List<string> SeeAlso { get; set; }
 
         public override string ToString()
         {
@@ -54,7 +55,6 @@ namespace QlikApiParser
     {
         public List<EngineParameter> Parameters { get; set; } = new List<EngineParameter>();
         public List<EngineResponse> Responses { get; set; } = new List<EngineResponse>();
-        public List<string> SeeAlso { get; set; }
 
         public EngineClass GetMultipleClass()
         {

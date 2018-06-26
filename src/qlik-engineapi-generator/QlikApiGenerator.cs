@@ -33,6 +33,9 @@ namespace QlikApiParser
         #region  private methods
         private T GetValueFromProperty<T>(JObject jObject, string name)
         {
+            if (jObject == null)
+                return default(T);
+
             var children = jObject.Children();
             foreach (var child in children)
             {
@@ -280,13 +283,17 @@ namespace QlikApiParser
                             case "object":
                                 engineClass = jObject.ToObject<EngineClass>();
                                 engineClass.Name = jProperty.Name;
+                                engineClass.SeeAlso = GetValueFromProperty<List<string>>(jObject, "x-qlik-see-also");
                                 var properties = ReadProperties(jObject, "properties");
+                                if (properties.Count == 0)
+                                    logger.Info($"The Class \"{engineClass.Name}\" has no properties.");
                                 engineClass.Properties.AddRange(properties);
                                 EngineObjects.Add(engineClass);
                                 break;
                             case "array":
                                 engineClass = jObject.ToObject<EngineClass>();
                                 engineClass.Name = jProperty.Name;
+                                engineClass.SeeAlso = GetValueFromProperty<List<string>>(jObject, "x-qlik-see-also");
                                 var arrays = ReadProperties(jObject, "items");
                                 engineClass.Properties.AddRange(arrays);
                                 EngineObjects.Add(engineClass);
@@ -447,9 +454,15 @@ namespace QlikApiParser
                     fileContent.AppendLine(QlikApiUtils.Indented("#region Classes", 1));
                     logger.Debug($"Write Classes {classObjects.Count}");
                     lineCounter = 0;
+                    var descBuilder = new DescritpionBuilder(Config.UseDescription);
                     foreach (EngineClass classObject in classObjects)
                     {
                         lineCounter++;
+                        descBuilder.Summary = classObject.Description;
+                        descBuilder.SeeAlso = classObject.SeeAlso;
+                        var desc = descBuilder.Generate(1);
+                        if (!String.IsNullOrEmpty(desc))
+                            fileContent.AppendLine(desc);
                         fileContent.AppendLine(QlikApiUtils.Indented($"public class {classObject.Name}<###implements###>", 1));
                         fileContent.AppendLine(QlikApiUtils.Indented("{", 1));
                         if (classObject.Properties.Count > 0)
