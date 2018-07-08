@@ -23,7 +23,7 @@
   </PropertyGroup>
 
   <Choose>
-    <When Condition="'$(Configuration)' == 'Debug'">
+    <When Condition="'$(Configuration)' == 'Release'">
       <PropertyGroup>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
       </PropertyGroup>
@@ -50,7 +50,7 @@
     <ReadLinesFromFile File="$(SolutionDir)\..\..\nugetapikey.txt">
       <Output TaskParameter="Lines" PropertyName="NugetAPIKey" />
     </ReadLinesFromFile>
-    <!--<Exec WorkingDirectory="$(BaseDir)" Command="dotnet nuget push $(PackageOutputAbsolutePath)$(PackageId).$(PackageVersion).nupkg -k $(NugetAPIKey) -s https://api.nuget.org/v3/index.json" />-->
+    <Exec WorkingDirectory="$(BaseDir)" Command="dotnet nuget push $(PackageOutputAbsolutePath)$(PackageId).$(PackageVersion).nupkg -k $(NugetAPIKey) -s https://api.nuget.org/v3/index.json" />
   </Target>
 
   <ItemGroup>
