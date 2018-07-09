@@ -46,5 +46,29 @@ namespace QlikApiParser
                     return type;
             }
         }
+
+        public static string GetDefaultValue(string type)
+        {
+            switch (type?.ToLowerInvariant())
+            {
+                case "integer":
+                case "int8":
+                    return "0";
+                case "boolean":
+                    return "false";
+                case "number":
+                    return "0.0D";
+                case "object":
+                    return "null";
+                case "nan":
+                    return "null";
+                case "string":
+                    return "null";
+                case "-1e+300":
+                    return "0.0D";
+                default:
+                    return "null";
+            }
+        }
     }
 }

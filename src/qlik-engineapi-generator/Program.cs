@@ -98,6 +98,8 @@
                     UseDescription = Convert.ToBoolean(args[2]),
                     UseQlikResponseLogic = Convert.ToBoolean(args[3]),
                     NamespaceName = args[4],
+                    AsyncMode  = (AsyncMode)Enum.Parse<AsyncMode>(args[5], true),
+                    GenerateCancelationToken = Convert.ToBoolean(args[6]),
                 };
                 return config;
             }

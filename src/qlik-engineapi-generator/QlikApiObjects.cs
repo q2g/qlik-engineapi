@@ -159,6 +159,9 @@ namespace QlikApiParser
         public List<EngineMethod> Methods { get; set; } = new List<EngineMethod>();
 
         [JsonIgnore]
+        public List<EngineProperty> Properties { get; set; } = new List<EngineProperty>();
+
+        [JsonIgnore]
         public EngineType EngType { get => EngineType.INTERFACE; }
     }
 
@@ -284,11 +287,11 @@ namespace QlikApiParser
         public List<string> SeeAlso { get; set; } = new List<string>();
         public List<EngineParameter> Param { get; set; } = new List<EngineParameter>();
         public string Return { get; set; }
-        private bool UseDescription {get; set;}
+        private bool UseDescription { get; set; }
 
         public DescritpionBuilder(bool useDescription)
         {
-             UseDescription = useDescription;
+            UseDescription = useDescription;
         }
 
         private string GetName(string name, Tuple<string, string> args = null)
@@ -323,9 +326,9 @@ namespace QlikApiParser
         {
             try
             {
-                if(UseDescription == false)
-                  return null;
-                
+                if (UseDescription == false)
+                    return null;
+
                 var builder = new StringBuilder();
                 if (!String.IsNullOrEmpty(Summary))
                     builder.AppendLine(GetFormatedList(Summary.Split('\n').ToList(), "summary", layer));
