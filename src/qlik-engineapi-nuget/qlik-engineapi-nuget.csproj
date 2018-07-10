@@ -1,17 +1,63 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>netcoreapp2.0</TargetFrameworks>    
+    <TargetFrameworks>net452;netcoreapp2.0;netcoreapp2.1</TargetFrameworks>    
     <RootNamespace>Qlik.EngineAPI</RootNamespace>
-    <AssemblyName>qlik-engineapi</AssemblyName>
-    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <Authors>Konrad Mattheis</Authors>
-    <Company>q2g</Company>
-    <Version>12.0.0</Version>        
+    <AssemblyName>qlik-engineapi</AssemblyName>    
+
+    <Company />
+    <Product>XAML Markup Extensions</Product>
+    <Authors>Konrad Mattheis, Martin Berthold</Authors>
+    <RepositoryUrl>https://github.com/q2g/qlik-engineapi.git</RepositoryUrl>
+    <PackageLicenseUrl>https://raw.githubusercontent.com/q2g/qlik-engineapi/master/LICENSE</PackageLicenseUrl>
+    <PackageProjectUrl>https://github.com/q2g/qlik-engineapi</PackageProjectUrl>   
+    <Description>Automated Classes for the Qlik EngineAPI</Description>
+    <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+    <PackageReleaseNotes></PackageReleaseNotes>    
+    <PackageTags>qlik sense engine engineapi</PackageTags>
+
+    <Version>$(GitVersion_NuGetVersion)</Version>
+    <GenerateAssemblyFileVersionAttribute>false</GenerateAssemblyFileVersionAttribute>
+    <GenerateAssemblyInformationalVersionAttribute>false</GenerateAssemblyInformationalVersionAttribute>
+    <GenerateAssemblyVersionAttribute>false</GenerateAssemblyVersionAttribute>
   </PropertyGroup>
+
+  <Choose>
+    <When Condition="'$(Configuration)' == 'Release'">
+      <PropertyGroup>
+        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+      </PropertyGroup>
+    </When>
+    <Otherwise>
+      <PropertyGroup>
+        <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+      </PropertyGroup>
+    </Otherwise>
+  </Choose>
+
+  <Target Name="WriteVersion" AfterTargets="GetVersion" Condition="'$(PackageOutputAbsolutePath)' != ''">
+    <WriteLinesToFile File="$(PackageOutputAbsolutePath)\version.txt" Lines="$(GitVersion_NuGetVersion)" Overwrite="true" />
+  </Target>
+
+  <Target Name="SetPackageVersionFromFile" BeforeTargets="GenerateNuspec">
+    <ReadLinesFromFile File="$(PackageOutputAbsolutePath)\version.txt">
+      <Output TaskParameter="Lines" PropertyName="PackageVersion" />
+    </ReadLinesFromFile>
+    <Delete Files="$(PackageOutputAbsolutePath)\version.txt" />
+  </Target>
   
+  <Target Name="PublishToNugetWithAPIKey" AfterTargets="GenerateNuspec">
+    <ReadLinesFromFile File="$(SolutionDir)\..\..\nugetapikey.txt">
+      <Output TaskParameter="Lines" PropertyName="NugetAPIKey" />
+    </ReadLinesFromFile>
+    <Exec WorkingDirectory="$(BaseDir)" Command="dotnet nuget push $(PackageOutputAbsolutePath)$(PackageId).$(PackageVersion).nupkg -k $(NugetAPIKey) -s https://api.nuget.org/v3/index.json" />
+  </Target>
+
   <ItemGroup>
-    <PackageReference Include="Newtonsoft.Json" Version="11.0.2"/>
+    <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
+    <PackageReference Include="GitVersionTask" Version="4.0.0-beta0008">
+      <PrivateAssets>All</PrivateAssets>
+    </PackageReference>
   </ItemGroup>
 
 </Project>
