@@ -317,10 +317,6 @@ namespace QlikApiParser
                             case "object":
                                 engineClass = jObject.ToObject<EngineClass>();
                                 engineClass.Name = jProperty.Name;
-
-                                if(engineClass.Name == "NxMeasure")
-                                 logger.Debug("jkljlk");
-
                                 engineClass.SeeAlso = GetValueFromProperty<List<string>>(jObject, "x-qlik-see-also");
                                 var properties = ReadProperties(jObject, "properties", engineClass.Name);
                                 if (properties.Count == 0)
