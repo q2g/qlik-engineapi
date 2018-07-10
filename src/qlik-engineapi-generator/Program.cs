@@ -8,6 +8,7 @@
     using Microsoft.Extensions.PlatformAbstractions;
     using Newtonsoft.Json.Linq;
     using Newtonsoft.Json;
+    using Newtonsoft.Helper;
     using NLog.Config;
     using NLog;
     using System.Collections.Generic;
@@ -23,10 +24,9 @@
         {
             try
             {
+                SetLoggerSettings();
                 logger.Info("qlik-engineapi-generator");
                 logger.Info("Load log options...");
-                SetLoggerSettings();
-
                 if (args == null || args.Length < 5)
                     throw new Exception("5 Parameter erwartet.");
 
@@ -52,6 +52,13 @@
                 {
                     var changeJsonObject = GetJsonObject(changeJsonFile);
                     origJsonObject.Merge(changeJsonObject);
+                    var keyNames = new List<string>() {"qExportState", "qMatchingFieldMode", "qGroup"};
+                    var parameters = origJsonObject.SelectTokens("$...parameters").ToList();
+                    for (int i = 0; i < parameters.Count; i++)
+                    {
+                         var jArray = parameters[i].ToObject<JArray>();
+                         parameters[i].Replace(origJsonObject.MergeArray(jArray, keyNames));
+                    }
                 }
 
                 logger.Info("Start parsing...");
@@ -73,16 +80,18 @@
                 foreach (var classResult in objectResults)
                 {
                     savePath = Path.Combine(config.OutputFolder, $"{classResult.Name}.cs");
-                    qlikApiGenerator.SaveToCSharp(config, new List<IEngineObject>() {classResult}, savePath);
+                    qlikApiGenerator.SaveToCSharp(config, new List<IEngineObject>() { classResult }, savePath);
                 }
 
-                logger.Info("Finish");
                 Environment.ExitCode = 0;
+                logger.Info("Finish");
+                logger.Factory.Flush();
             }
             catch (Exception ex)
             {
-                Environment.ExitCode = 1;
                 logger.Error(ex, "The Application has an Error.");
+                logger.Factory.Flush();
+                Environment.ExitCode = 1;
             }
         }
 
@@ -98,6 +107,8 @@
                     UseDescription = Convert.ToBoolean(args[2]),
                     UseQlikResponseLogic = Convert.ToBoolean(args[3]),
                     NamespaceName = args[4],
+                    AsyncMode = (AsyncMode)Enum.Parse<AsyncMode>(args[5], true),
+                    GenerateCancelationToken = Convert.ToBoolean(args[6]),
                 };
                 return config;
             }
@@ -128,12 +139,12 @@
             try
             {
                 var appPath = PlatformServices.Default.Application.ApplicationBasePath;
-                var files = Directory.GetFiles(appPath, "*.*", SearchOption.TopDirectoryOnly)
-                    .Where(f => f.ToLowerInvariant().EndsWith("\\app.config") ||
+                var files = Directory.GetFiles(appPath, "*.*", SearchOption.TopDirectoryOnly);
+                var appConfigFiles = files.Where(f => f.ToLowerInvariant().EndsWith("\\app.config") ||
                        f.ToLowerInvariant().EndsWith("\\app.json")).ToList();
-                if (files != null && files.Count > 0)
+                if (files != null && appConfigFiles.Count > 0)
                 {
-                    if (files.Count > 1)
+                    if (appConfigFiles.Count > 1)
                         throw new Exception("Too many logger configs found.");
 
                     path = files.FirstOrDefault();
@@ -154,6 +165,10 @@
                 {
                     throw new Exception("No logger config loaded.");
                 }
+
+                 var logFile = files.FirstOrDefault(f => Path.GetExtension(f) == ".log");
+                 if(logFile != null)
+                   File.Delete(logFile);
             }
             catch
             {

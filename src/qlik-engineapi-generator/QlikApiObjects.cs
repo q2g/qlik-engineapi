@@ -47,6 +47,8 @@ namespace QlikApiParser
         public string Type { get; set; }
         public string Format { get; set; }
         public bool Required { get; set; }
+        public string Default { get; set; }
+        public string DefaultValueFromDescription { get; set; }
     }
 
     [JsonObject(ItemNullValueHandling = NullValueHandling.Ignore,
@@ -159,6 +161,9 @@ namespace QlikApiParser
         public List<EngineMethod> Methods { get; set; } = new List<EngineMethod>();
 
         [JsonIgnore]
+        public List<EngineProperty> Properties { get; set; } = new List<EngineProperty>();
+
+        [JsonIgnore]
         public EngineType EngType { get => EngineType.INTERFACE; }
     }
 
@@ -252,8 +257,6 @@ namespace QlikApiParser
                 NamingStrategyType = typeof(CamelCaseNamingStrategy))]
     public class EngineProperty : EngineAdvanced
     {
-        public string Default { get; set; }
-        public string DefaultValueFromDescription { get; set; }
         public List<string> Enum { get; set; }
         public bool IsEnumType { get; set; }
         public string Ref { get; set; }
@@ -284,11 +287,11 @@ namespace QlikApiParser
         public List<string> SeeAlso { get; set; } = new List<string>();
         public List<EngineParameter> Param { get; set; } = new List<EngineParameter>();
         public string Return { get; set; }
-        private bool UseDescription {get; set;}
+        private bool UseDescription { get; set; }
 
         public DescritpionBuilder(bool useDescription)
         {
-             UseDescription = useDescription;
+            UseDescription = useDescription;
         }
 
         private string GetName(string name, Tuple<string, string> args = null)
@@ -323,9 +326,9 @@ namespace QlikApiParser
         {
             try
             {
-                if(UseDescription == false)
-                  return null;
-                
+                if (UseDescription == false)
+                    return null;
+
                 var builder = new StringBuilder();
                 if (!String.IsNullOrEmpty(Summary))
                     builder.AppendLine(GetFormatedList(Summary.Split('\n').ToList(), "summary", layer));
