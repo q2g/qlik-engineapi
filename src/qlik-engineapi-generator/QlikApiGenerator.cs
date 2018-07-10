@@ -273,7 +273,7 @@ namespace QlikApiParser
             var parameter = new StringBuilder();
             if (method.Parameters.Count > 0)
             {
-                //Sortieren nach Required vorne???
+                //Sortieren nach Required, muss vorne sein???
                 var parameters = method.Parameters.OrderBy(p => p.Required == false);
                 foreach (var para in parameters)
                 {
