@@ -139,12 +139,12 @@
             try
             {
                 var appPath = PlatformServices.Default.Application.ApplicationBasePath;
-                var files = Directory.GetFiles(appPath, "*.*", SearchOption.TopDirectoryOnly)
-                    .Where(f => f.ToLowerInvariant().EndsWith("\\app.config") ||
+                var files = Directory.GetFiles(appPath, "*.*", SearchOption.TopDirectoryOnly);
+                var appConfigFiles = files.Where(f => f.ToLowerInvariant().EndsWith("\\app.config") ||
                        f.ToLowerInvariant().EndsWith("\\app.json")).ToList();
-                if (files != null && files.Count > 0)
+                if (files != null && appConfigFiles.Count > 0)
                 {
-                    if (files.Count > 1)
+                    if (appConfigFiles.Count > 1)
                         throw new Exception("Too many logger configs found.");
 
                     path = files.FirstOrDefault();
@@ -165,6 +165,10 @@
                 {
                     throw new Exception("No logger config loaded.");
                 }
+
+                 var logFile = files.FirstOrDefault(f => Path.GetExtension(f) == ".log");
+                 if(logFile != null)
+                   File.Delete(logFile);
             }
             catch
             {

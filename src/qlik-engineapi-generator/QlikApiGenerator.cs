@@ -71,7 +71,7 @@ namespace QlikApiParser
 
         private string GetFormatedEnumBlock(EngineEnum enumObject)
         {
-            enumObject.RenameValues();
+            //enumObject.RenameValues();
 
             var builder = new StringBuilder();
             builder.Append(QlikApiUtils.Indented($"public enum {enumObject.Name}\r\n", 1));
@@ -317,6 +317,10 @@ namespace QlikApiParser
                             case "object":
                                 engineClass = jObject.ToObject<EngineClass>();
                                 engineClass.Name = jProperty.Name;
+
+                                if(engineClass.Name == "NxMeasure")
+                                 logger.Debug("jkljlk");
+
                                 engineClass.SeeAlso = GetValueFromProperty<List<string>>(jObject, "x-qlik-see-also");
                                 var properties = ReadProperties(jObject, "properties", engineClass.Name);
                                 if (properties.Count == 0)
