@@ -1,10 +1,60 @@
 {
+    "services": {
+        "GenericObject": {
+            "methods": {
+                "ExportData": {
+                    "parameters": [
+                        {
+                            "name": "qExportState",
+                            "default": "qExportState.ALL",
+                            "items": {},
+                            "schema": {
+                                "$ref": "#/definitions/qExportState"
+                            }
+                        }
+                    ]
+                }
+            }
+        },
+		"Doc": {
+            "methods": {
+                "GetMatchingFields": {
+                    "parameters": [
+                        {
+                            "name": "qMatchingFieldMode",
+                            "default": "qMatchingFieldMode.ALL",
+                            "items": {},
+                            "schema": {
+                                "$ref": "#/definitions/qMatchingFieldMode"
+                            }
+                        }
+                    ]
+                }
+            }
+        },
+		"Global": {
+            "methods": {
+                "GetFunctions": {
+                    "parameters": [
+                        {
+                            "name": "qGroup",
+                            "default": "qGroup_3.ALL",
+                            "items": {},
+                            "schema": {
+                                "$ref": "#/definitions/qGroup"
+                            }
+                        }
+                    ]
+                }
+            }
+        },
+    },
     "definitions": {
         "ObjectInterface": {
             "type": "object"
-		},	
-	    "__NO_ENUM__": {
+        },
+        "__NO_ENUM__": {
             "export": "false"
         }
-	}	
+    }
 }

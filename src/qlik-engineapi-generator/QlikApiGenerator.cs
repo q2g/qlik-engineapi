@@ -120,7 +120,7 @@ namespace QlikApiParser
             return $"{name}_{exitingEnum.Count}";
         }
 
-        private List<EngineProperty> ReadProperties(JObject jObject, string tokenName)
+        private List<EngineProperty> ReadProperties(JObject jObject, string tokenName, string className)
         {
             var results = new List<EngineProperty>();
             try
@@ -141,7 +141,12 @@ namespace QlikApiParser
                     }
                     engineProperty.Name = jprop.Name;
                     if (engineProperty.Description != null && engineProperty.Description.Contains("The default value is"))
-                        engineProperty.DefaultValueFromDescription = engineProperty.Default;
+                    {
+                        if (!String.IsNullOrEmpty(engineProperty.Default))
+                            engineProperty.DefaultValueFromDescription = engineProperty.Default;
+                        else
+                            logger.Warn($"The default value was not found for the property: \"{engineProperty.Name}\" class: \"{className}\"");
+                    }
 
                     var refValue = GetValueFromProperty<string>(propObject, "$ref");
                     if (!String.IsNullOrEmpty(refValue))
@@ -274,7 +279,7 @@ namespace QlikApiParser
                 {
                     var defaultValue = String.Empty;
                     if (!para.Required)
-                        defaultValue = $" = {QlikApiUtils.GetDefaultValue(para.Type)}";
+                        defaultValue = $" = {QlikApiUtils.GetDefaultValue(para.Type, para.Default)}";
                     parameter.Append($"{QlikApiUtils.GetDotNetType(para.Type)} {para.Name}{defaultValue}, ");
                 }
             }
@@ -313,7 +318,7 @@ namespace QlikApiParser
                                 engineClass = jObject.ToObject<EngineClass>();
                                 engineClass.Name = jProperty.Name;
                                 engineClass.SeeAlso = GetValueFromProperty<List<string>>(jObject, "x-qlik-see-also");
-                                var properties = ReadProperties(jObject, "properties");
+                                var properties = ReadProperties(jObject, "properties", engineClass.Name);
                                 if (properties.Count == 0)
                                     logger.Info($"The Class \"{engineClass.Name}\" has no properties.");
                                 engineClass.Properties.AddRange(properties);
@@ -335,7 +340,7 @@ namespace QlikApiParser
                                 engineClass = jObject.ToObject<EngineClass>();
                                 engineClass.Name = jProperty.Name;
                                 engineClass.SeeAlso = GetValueFromProperty<List<string>>(jObject, "x-qlik-see-also");
-                                var arrays = ReadProperties(jObject, "items");
+                                var arrays = ReadProperties(jObject, "items", engineClass.Name);
                                 engineClass.Properties.AddRange(arrays);
                                 EngineObjects.Add(engineClass);
                                 break;

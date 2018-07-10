@@ -47,8 +47,11 @@ namespace QlikApiParser
             }
         }
 
-        public static string GetDefaultValue(string type)
+        public static string GetDefaultValue(string type, string defaultValue)
         {
+            if(!String.IsNullOrEmpty(defaultValue))
+              return defaultValue;
+            
             switch (type?.ToLowerInvariant())
             {
                 case "integer":

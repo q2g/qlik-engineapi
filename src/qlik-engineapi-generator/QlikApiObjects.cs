@@ -47,6 +47,8 @@ namespace QlikApiParser
         public string Type { get; set; }
         public string Format { get; set; }
         public bool Required { get; set; }
+        public string Default { get; set; }
+        public string DefaultValueFromDescription { get; set; }
     }
 
     [JsonObject(ItemNullValueHandling = NullValueHandling.Ignore,
@@ -255,8 +257,6 @@ namespace QlikApiParser
                 NamingStrategyType = typeof(CamelCaseNamingStrategy))]
     public class EngineProperty : EngineAdvanced
     {
-        public string Default { get; set; }
-        public string DefaultValueFromDescription { get; set; }
         public List<string> Enum { get; set; }
         public bool IsEnumType { get; set; }
         public string Ref { get; set; }
