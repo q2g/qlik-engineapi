@@ -38,7 +38,7 @@
                     "parameters": [
                         {
                             "name": "qGroup",
-                            "default": "qGroup_3.ALL",
+                            "default": "qGroup_3.FUNC_GROUP_ALL",
                             "items": {},
                             "schema": {
                                 "$ref": "#/definitions/qGroup"
