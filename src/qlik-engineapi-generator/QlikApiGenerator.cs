@@ -496,6 +496,13 @@ namespace QlikApiParser
                             fileContent.AppendLine(QlikApiUtils.Indented($"{QlikApiUtils.GetDotNetType(property.Type)} {property.Name} {{ get; set; }}", 2));
                         foreach (var methodObject in interfaceObject.Methods)
                             fileContent.AppendLine(GetFormatedMethod(methodObject));
+
+                        if (Config.BaseObjectInterfaceName == interfaceObject.Name) {
+                            fileContent.AppendLine(QlikApiUtils.Indented("event EventHandler Changed;", 2));
+                            fileContent.AppendLine(QlikApiUtils.Indented("event EventHandler Closed;", 2));
+                            fileContent.AppendLine(QlikApiUtils.Indented("void OnChanged();", 2));                            
+                        }
+
                         fileContent.AppendLine(QlikApiUtils.Indented("}", 1));
                         if (lineCounter < interfaceObjects.Count)
                             fileContent.AppendLine();
