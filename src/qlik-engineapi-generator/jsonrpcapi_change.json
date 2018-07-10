@@ -1,10 +1,217 @@
 {
+    "services": {
+        "GenericObject": {
+            "methods": {
+                "ExportData": {
+                    "parameters": [
+                        {
+                            "name": "qExportState",
+                            "default": "qExportState.EXPORT_ALL",
+                            "items": {},
+                            "schema": {
+                                "$ref": "#/definitions/qExportState"
+                            }
+                        }
+                    ]
+                }
+            }
+        },
+        "Doc": {
+            "methods": {
+                "GetMatchingFields": {
+                    "parameters": [
+                        {
+                            "name": "qMatchingFieldMode",
+                            "default": "qMatchingFieldMode.MATCHINGFIELDMODE_MATCH_ALL",
+                            "items": {},
+                            "schema": {
+                                "$ref": "#/definitions/qMatchingFieldMode"
+                            }
+                        }
+                    ]
+                }
+            }
+        },
+        "Global": {
+            "methods": {
+                "GetFunctions": {
+                    "parameters": [
+                        {
+                            "name": "qGroup",
+                            "default": "qGroup_3.FUNC_GROUP_ALL",
+                            "items": {},
+                            "schema": {
+                                "$ref": "#/definitions/qGroup"
+                            }
+                        }
+                    ]
+                }
+            }
+        }
+    },
     "definitions": {
         "ObjectInterface": {
             "type": "object"
-		},	
-	    "__NO_ENUM__": {
+        },
+        "__NO_ENUM__": {
             "export": "false"
+        },
+        "NxCell": {
+            "properties": {
+                "qIsEmpty": {
+                    "default": false
+                },
+                "qIsTotalCell": {
+                    "default": false
+                },
+                "qIsOtherCell": {
+                    "default": false
+                }
+            }
+        },
+        "BookmarkFieldItem": {
+            "properties": {
+                "qAndMode": 
+                {
+                    "default": false
+                },
+                "qOneAndOnlyOne":
+                {
+                    "default": false
+                }
+            }
+        },
+        "NxFieldDescription": {
+            "properties": {
+                "qAndMode": 
+                {
+                    "default": false
+                }
+            }
+        },
+        "NxInlineDimensionDef": {
+            "properties": {
+                "qActiveField": 
+                {
+                    "default": 0
+                }
+            }
+        },
+        "NxMeasure": {
+            "properties": {
+                "qSortBy": 
+                {
+                    "default": "null"
+                }
+            }
+        },
+        "NxInlineMeasureDef": {
+            "properties": {
+                "qAggrFunc": 
+                {
+                    "default": "null"
+                },
+                "qActiveExpression": 
+                {
+                    "default": 0
+                }
+            }
+        },
+        "NxDimensionInfo": {
+            "properties": {
+                "qSortIndicator": 
+                {
+                    "default": "NX_SORT_INDICATE_NONE"
+                }
+            }
+        },
+        "NxMeasureInfo": {
+            "properties": {
+                "qSortIndicator": 
+                {
+                    "default": "NX_SORT_INDICATE_NONE"
+                }
+            }
+        },
+        "ListObjectDef": {
+            "properties": {
+                "qShowAlternatives": 
+                {
+                    "default": false
+                }
+            }
+        },
+        "NxCurrentSelectionItem": {
+            "properties": {
+                "qSelectionThreshold": 
+                {
+                    "default": 6
+                }
+            }
+        },
+        "NxTreeDimensionInfo": {
+            "properties": {
+                "qSortIndicator": 
+                {
+                    "default": "NX_SORT_INDICATE_NONE"
+                }
+            }
+        },
+        "GenericDimensionInfo": {
+            "properties": {
+                "qAndMode": 
+                {
+                    "default": false
+                }
+            }
+        },
+        "FieldDescription": {
+            "properties": {
+                "qIsSystem": 
+                {
+                    "default": false
+                },
+                "qIsHidden": 
+                {
+                    "default": false
+                },
+                "qIsSemantic": 
+                {
+                    "default": false
+                },
+                "qDistinctOnly": 
+                {
+                    "default": false
+                },
+                "qIsLocked": 
+                {
+                    "default": false
+                },
+                "qAlwaysOneSelected": 
+                {
+                    "default": false
+                },
+                "qAndMode": 
+                {
+                    "default": false
+                },
+                "qIsNumeric": 
+                {
+                    "default": false
+                },
+                "qIsDefinitionOnly": 
+                {
+                    "default": false
+                }
+            }
+        },
+        "ScriptSyntaxError": {
+            "properties": {
+                "qSecondaryFailure": 
+                {
+                    "default": false
+                }
+            }
         }
-	}	
+    }
 }

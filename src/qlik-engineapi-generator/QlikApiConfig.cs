@@ -9,6 +9,12 @@ namespace QlikApiParser
     using NLog;
     #endregion
 
+    public enum AsyncMode
+    {
+        NONE,
+        SHOW
+    }
+
     public class QlikApiConfig
     {
         #region  Properties
@@ -17,12 +23,20 @@ namespace QlikApiParser
         public string NamespaceName { get; set; }
         public bool UseQlikResponseLogic { get; set; } = true;
         public bool UseDescription { get; set; } = true;
+        public AsyncMode AsyncMode { get; set; }
+        public bool GenerateCancelationToken { get; set; } = true;
+
+        public string BaseObjectInterfaceClassName { get; } = "ObjectInterface";
+        public string BaseObjectInterfaceName
+        {
+            get { return $"I{BaseObjectInterfaceClassName }"; }
+        }
         #endregion
 
         public string GetChangeFile()
         {
-             var name = Path.GetFileNameWithoutExtension(SourceFile);
-             return $"{name}_change.json";
+            var name = Path.GetFileNameWithoutExtension(SourceFile);
+            return $"{name}_change.json";
         }
     }
 }
