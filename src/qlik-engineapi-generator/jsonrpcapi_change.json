@@ -101,7 +101,7 @@
             "properties": {
                 "qSortBy": 
                 {
-                    "default": "{ \"qSortByAscii\": 1 }"
+                    "default": "null"
                 }
             }
         },
