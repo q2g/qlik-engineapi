@@ -13,6 +13,36 @@
                             }
                         }
                     ]
+                },
+                "GetChild": {
+                    "responses": [
+                        {
+                            "name": "qReturn",
+                            "schema": {
+                                "$service": "#/service/GenericObject"
+                            }
+                        }
+                    ]
+                },
+                "CreateChild": {
+                    "responses": [
+                        {
+                            "name": "qReturn",
+                            "schema": {
+                                "$service": "#/service/GenericObject"
+                            }
+                        }
+                    ]
+                },
+                "GetSnapshotObject": {
+                    "responses": [
+                        {
+                            "name": "qReturn",
+                            "schema": {
+                                "$service": "#/service/GenericBookmark"
+                            }
+                        }
+                    ]
                 }
             }
         },
@@ -29,11 +59,211 @@
                             }
                         }
                     ]
+                },
+                "GetField": {
+                    "responses": [
+                        {
+                            "name": "qReturn",
+                            "schema": {
+                                "$service": "#/service/Field"
+                            }
+                        }
+                    ]
+                },
+                "GetVariable": {
+                    "responses": [
+                        {
+                            "name": "qReturn",
+                            "schema": {
+                                "$service": "#/service/Variable"
+                            }
+                        }
+                    ]
+                },
+                "CreateSessionObject": {
+                    "responses": [
+                        {
+                            "name": "qReturn",
+                            "schema": {
+                                "$service": "#/service/GenericObject"
+                            }
+                        }
+                    ]
+                },
+                "CreateObject": {
+                    "responses": [
+                        {
+                            "name": "qReturn",
+                            "schema": {
+                                "$service": "#/service/GenericObject"
+                            }
+                        }
+                    ]
+                },
+                "GetObject": {
+                    "responses": [
+                        {
+                            "name": "qReturn",
+                            "schema": {
+                                "$service": "#/service/GenericObject"
+                            }
+                        }
+                    ]
+                },
+                "CreateDimension": {
+                    "responses": [
+                        {
+                            "name": "qReturn",
+                            "schema": {
+                                "$service": "#/service/GenericDimension"
+                            }
+                        }
+                    ]
+                },
+                "GetDimension": {
+                    "responses": [
+                        {
+                            "name": "qReturn",
+                            "schema": {
+                                "$service": "#/service/GenericDimension"
+                            }
+                        }
+                    ]
+                },
+                "CreateMeasure": {
+                    "responses": [
+                        {
+                            "name": "qReturn",
+                            "schema": {
+                                "$service": "#/service/GenericMeasure"
+                            }
+                        }
+                    ]
+                },
+                "GetMeasure": {
+                    "responses": [
+                        {
+                            "name": "qReturn",
+                            "schema": {
+                                "$service": "#/service/GenericMeasure"
+                            }
+                        }
+                    ]
+                },
+                "CreateSessionVariable": {
+                    "responses": [
+                        {
+                            "name": "qReturn",
+                            "schema": {
+                                "$service": "#/service/GenericVariable"
+                            }
+                        }
+                    ]
+                },
+                "CreateVariableEx": {
+                    "responses": [
+                        {
+                            "name": "qReturn",
+                            "schema": {
+                                "$service": "#/service/NxInfo"
+                            }
+                        }
+                    ]
+                },
+                "GetVariableById": {
+                    "responses": [
+                        {
+                            "name": "qReturn",
+                            "schema": {
+                                "$service": "#/service/GenericVariable"
+                            }
+                        }
+                    ]
+                },
+                "GetVariableByName": {
+                    "responses": [
+                        {
+                            "name": "qReturn",
+                            "schema": {
+                                "$service": "#/service/GenericVariable"
+                            }
+                        }
+                    ]
+                },
+                "CreateBookmark": {
+                    "responses": [
+                        {
+                            "name": "qReturn",
+                            "schema": {
+                                "$service": "#/service/GenericBookmark"
+                            }
+                        }
+                    ]
+                },
+                "GetBookmark": {
+                    "responses": [
+                        {
+                            "name": "qReturn",
+                            "schema": {
+                                "$service": "#/service/GenericBookmark"
+                            }
+                        }
+                    ]
                 }
             }
         },
         "Global": {
             "methods": {
+                "OpenDoc": {
+                    "responses": [
+                        {
+                            "name": "qReturn",
+                            "schema": {
+                                "$service": "#/service/Doc"
+                            }
+                        }
+                    ]
+                },
+                "CreateDocEx": {
+                    "responses": [
+                        {
+                            "name": "qReturn",
+                            "schema": {
+                                "$service": "#/service/Doc"
+                            }
+                        }
+                    ]
+                },
+                "GetActiveDoc": {
+                    "responses": [
+                        {
+                            "name": "qReturn",
+                            "schema": {
+                                "$service": "#/service/Doc"
+                            }
+                        }
+                    ]
+                },
+                "CreateSessionApp": {
+                    "responses": [
+                        {
+                            "name": "qReturn",
+                            "schema": {
+                                "$service": "#/service/Doc"
+                            }
+                        }
+                    ]
+                },
+                "CreateSessionAppFromApp": {
+                    "responses": [
+                        {
+                            "name": "qReturn",
+                            "schema": {
+                                "$service": "#/service/Doc"
+                            }
+                        }
+                    ]
+                },
                 "GetFunctions": {
                     "parameters": [
                         {
@@ -71,144 +301,121 @@
         },
         "BookmarkFieldItem": {
             "properties": {
-                "qAndMode": 
-                {
+                "qAndMode": {
                     "default": false
                 },
-                "qOneAndOnlyOne":
-                {
+                "qOneAndOnlyOne": {
                     "default": false
                 }
             }
         },
         "NxFieldDescription": {
             "properties": {
-                "qAndMode": 
-                {
+                "qAndMode": {
                     "default": false
                 }
             }
         },
         "NxInlineDimensionDef": {
             "properties": {
-                "qActiveField": 
-                {
+                "qActiveField": {
                     "default": 0
                 }
             }
         },
         "NxMeasure": {
             "properties": {
-                "qSortBy": 
-                {
+                "qSortBy": {
                     "default": "null"
                 }
             }
         },
         "NxInlineMeasureDef": {
             "properties": {
-                "qAggrFunc": 
-                {
+                "qAggrFunc": {
                     "default": "null"
                 },
-                "qActiveExpression": 
-                {
+                "qActiveExpression": {
                     "default": 0
                 }
             }
         },
         "NxDimensionInfo": {
             "properties": {
-                "qSortIndicator": 
-                {
+                "qSortIndicator": {
                     "default": "NX_SORT_INDICATE_NONE"
                 }
             }
         },
         "NxMeasureInfo": {
             "properties": {
-                "qSortIndicator": 
-                {
+                "qSortIndicator": {
                     "default": "NX_SORT_INDICATE_NONE"
                 }
             }
         },
         "ListObjectDef": {
             "properties": {
-                "qShowAlternatives": 
-                {
+                "qShowAlternatives": {
                     "default": false
                 }
             }
         },
         "NxCurrentSelectionItem": {
             "properties": {
-                "qSelectionThreshold": 
-                {
+                "qSelectionThreshold": {
                     "default": 6
                 }
             }
         },
         "NxTreeDimensionInfo": {
             "properties": {
-                "qSortIndicator": 
-                {
+                "qSortIndicator": {
                     "default": "NX_SORT_INDICATE_NONE"
                 }
             }
         },
         "GenericDimensionInfo": {
             "properties": {
-                "qAndMode": 
-                {
+                "qAndMode": {
                     "default": false
                 }
             }
         },
         "FieldDescription": {
             "properties": {
-                "qIsSystem": 
-                {
+                "qIsSystem": {
                     "default": false
                 },
-                "qIsHidden": 
-                {
+                "qIsHidden": {
                     "default": false
                 },
-                "qIsSemantic": 
-                {
+                "qIsSemantic": {
                     "default": false
                 },
-                "qDistinctOnly": 
-                {
+                "qDistinctOnly": {
                     "default": false
                 },
-                "qIsLocked": 
-                {
+                "qIsLocked": {
                     "default": false
                 },
-                "qAlwaysOneSelected": 
-                {
+                "qAlwaysOneSelected": {
                     "default": false
                 },
-                "qAndMode": 
-                {
+                "qAndMode": {
                     "default": false
                 },
-                "qIsNumeric": 
-                {
+                "qIsNumeric": {
                     "default": false
                 },
-                "qIsDefinitionOnly": 
-                {
+                "qIsDefinitionOnly": {
                     "default": false
                 }
             }
         },
         "ScriptSyntaxError": {
             "properties": {
-                "qSecondaryFailure": 
-                {
+                "qSecondaryFailure": {
                     "default": false
                 }
             }

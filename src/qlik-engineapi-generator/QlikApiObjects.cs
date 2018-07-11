@@ -33,7 +33,7 @@ namespace QlikApiParser
         public string Name { get; set; }
         public string Description { get; set; }
         public List<string> SeeAlso { get; set; }
-        public bool Deprecated {get; set; }
+        public bool Deprecated { get; set; }
 
         public override string ToString()
         {
@@ -79,6 +79,10 @@ namespace QlikApiParser
                         Required = response.Required,
                         Format = response.Format,
                     };
+
+                    var serviceType = response.GetServiceType();
+                    if (serviceType != null)
+                        engineProprty.Type = serviceType;
                     result.Properties.Add(engineProprty);
                 }
                 return result;
@@ -118,6 +122,20 @@ namespace QlikApiParser
             if (Type == "array")
                 return $"List<{QlikApiUtils.GetDotNetType(result)}>";
             return result;
+        }
+
+        public string GetServiceType()
+        {
+            if (Schema == null)
+                return null;
+
+            var service = Schema["$service"]?.ToObject<string>() ?? null;
+            if (service != null)
+            {
+                service = service?.Split('/')?.LastOrDefault() ?? null;
+                return $"I{service}";
+            }
+            return null;
         }
 
         public string GetRealType()

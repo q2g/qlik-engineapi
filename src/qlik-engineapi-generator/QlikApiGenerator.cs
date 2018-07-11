@@ -245,6 +245,10 @@ namespace QlikApiParser
             if (response != null)
             {
                 returnType = $"Task<{QlikApiUtils.GetDotNetType(response.GetRealType())}>";
+                var serviceType = response.GetServiceType();
+                if (serviceType != null)
+                    returnType = $"Task<{serviceType}>";
+
                 if (method?.Responses?.Count > 1 || !Config.UseQlikResponseLogic)
                 {
                     logger.Debug($"The method {method?.Name} has {method?.Responses?.Count} responses.");

@@ -54,13 +54,21 @@
                     origJsonObject.Merge(changeJsonObject);
                     var keyNames = new List<string>() {"qExportState", "qMatchingFieldMode", "qGroup"};
                     var parameters = origJsonObject.SelectTokens("$...parameters").ToList();
+                    var jArray = new JArray();
                     for (int i = 0; i < parameters.Count; i++)
                     {
-                         var jArray = parameters[i].ToObject<JArray>();
+                         jArray = parameters[i].ToObject<JArray>();
                          parameters[i].Replace(origJsonObject.MergeArray(jArray, keyNames));
                     }
+                    keyNames = new List<string>() {"qReturn"};
+                    var responses = origJsonObject.SelectTokens("$...responses").ToList();
+                    for (int i = 0; i < responses.Count; i++)
+                    {
+                        jArray = responses[i].ToObject<JArray>();
+                        responses[i].Replace(origJsonObject.MergeArray(jArray, keyNames));
+                    }
                 }
-
+                
                 logger.Info("Start parsing...");
                 var qlikApiGenerator = new QlikApiGenerator(config);
                 var engineObjects = qlikApiGenerator.ReadJson(origJsonObject);
