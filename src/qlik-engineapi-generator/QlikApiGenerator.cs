@@ -273,7 +273,7 @@ namespace QlikApiParser
             var parameter = new StringBuilder();
             if (method.Parameters.Count > 0)
             {
-                //Sortieren nach Required, muss vorne sein???
+                //Sort parameters by required
                 var parameters = method.Parameters.OrderBy(p => p.Required == false);
                 foreach (var para in parameters)
                 {
@@ -291,6 +291,8 @@ namespace QlikApiParser
                 else
                     cancellationToken = ", CancellationToken? token = null";
             }
+            if (method.Deprecated)
+                methodBuilder.AppendLine(QlikApiUtils.Indented("[ObsoleteAttribute]", 2));
             methodBuilder.AppendLine(QlikApiUtils.Indented($"{returnType} {method.Name}{asyncValue}({parameterValue}{cancellationToken});", 2));
             return methodBuilder.ToString();
         }
@@ -497,10 +499,11 @@ namespace QlikApiParser
                         foreach (var methodObject in interfaceObject.Methods)
                             fileContent.AppendLine(GetFormatedMethod(methodObject));
 
-                        if (Config.BaseObjectInterfaceName == interfaceObject.Name) {
+                        if (Config.BaseObjectInterfaceName == interfaceObject.Name)
+                        {
                             fileContent.AppendLine(QlikApiUtils.Indented("event EventHandler Changed;", 2));
                             fileContent.AppendLine(QlikApiUtils.Indented("event EventHandler Closed;", 2));
-                            fileContent.AppendLine(QlikApiUtils.Indented("void OnChanged();", 2));                            
+                            fileContent.AppendLine(QlikApiUtils.Indented("void OnChanged();", 2));
                         }
 
                         fileContent.AppendLine(QlikApiUtils.Indented("}", 1));

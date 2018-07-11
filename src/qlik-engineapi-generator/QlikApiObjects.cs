@@ -33,6 +33,7 @@ namespace QlikApiParser
         public string Name { get; set; }
         public string Description { get; set; }
         public List<string> SeeAlso { get; set; }
+        public bool Deprecated {get; set; }
 
         public override string ToString()
         {
