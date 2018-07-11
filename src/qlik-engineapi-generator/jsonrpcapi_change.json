@@ -165,7 +165,7 @@
                         {
                             "name": "qReturn",
                             "schema": {
-                                "$service": "#/service/NxInfo"
+                                "$service": "#/service/GenericVariable"
                             }
                         }
                     ]
