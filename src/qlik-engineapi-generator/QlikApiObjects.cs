@@ -282,7 +282,10 @@ namespace QlikApiParser
 
         public string GetRefType()
         {
-            return Ref?.Split('/')?.LastOrDefault() ?? null;
+            var result = Ref?.Split('/')?.LastOrDefault() ?? null;
+            if(result == "JsonObject")
+              return "JObject";
+            return result;
         }
 
         public List<EngineEnum> GetConvertedEnums()

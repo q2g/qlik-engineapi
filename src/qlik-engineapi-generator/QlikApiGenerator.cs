@@ -323,6 +323,14 @@ namespace QlikApiParser
                             case "object":
                                 engineClass = jObject.ToObject<EngineClass>();
                                 engineClass.Name = jProperty.Name;
+
+                                //special case for .NET JObject - JsonObject is ignored
+                                if (engineClass.Name == "JsonObject")
+                                {
+                                    logger.Info("The class \"JsonObject\" is ignored because \"JObject\" already exists in the namespace Newtonsoft.");
+                                    continue;
+                                }
+                                
                                 engineClass.SeeAlso = GetValueFromProperty<List<string>>(jObject, "x-qlik-see-also");
                                 var properties = ReadProperties(jObject, "properties", engineClass.Name);
                                 if (properties.Count == 0)
@@ -416,6 +424,20 @@ namespace QlikApiParser
                                     }
                                 }
                                 engineInterface.Methods.Add(engineMethod);
+                                if (engineMethod.Parameters.Count > 0)
+                                {
+                                    // Add a JObject version as parameter
+                                    var json = JsonConvert.SerializeObject(engineMethod);
+                                    var jsonMethod = JsonConvert.DeserializeObject<EngineMethod>(json);
+                                    jsonMethod.Parameters.Clear();
+                                    jsonMethod.Parameters.Add(new EngineParameter()
+                                    {
+                                        Name = "param",
+                                        Type = "JObject",
+                                        Required = true,
+                                    });
+                                    engineInterface.Methods.Add(jsonMethod);
+                                }
                             }
                         }
                     }
