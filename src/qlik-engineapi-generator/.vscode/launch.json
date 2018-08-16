@@ -12,9 +12,6 @@
             "preLaunchTask": "build",
             // If you have changed target frameworks, make sure to update the program path.
             "program": "${workspaceFolder}/bin/Debug/netcoreapp2.1/qlik-engineapi-generator.dll",
-            //ARGS: SourceFile, OutputFolder, UseDescription, UseQlikResponse, NamespaceName
-            "args": ["${workspaceFolder}/bin/Debug/netcoreapp2.1/jsonrpcapi.json", 
-                     "${workspaceFolder}/../qlik-engineapi-nuget/", "true", "true", "Qlik.EngineAPI", "SHOW", "true"],
             "cwd": "${workspaceFolder}/bin/Debug/netcoreapp2.1/",            
             "console": "internalConsole",
             "stopAtEntry": false,
