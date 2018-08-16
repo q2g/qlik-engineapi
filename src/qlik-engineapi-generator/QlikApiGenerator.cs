@@ -435,6 +435,7 @@ namespace QlikApiParser
                                         Name = "param",
                                         Type = "JObject",
                                         Required = true,
+                                        Description = "Qlik Parameter as JSON object.",
                                     });
                                     engineInterface.Methods.Add(jsonMethod);
                                 }
