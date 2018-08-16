@@ -37,6 +37,8 @@ namespace QlikApiParser
                     return "double";
                 case "object":
                     return "JObject";
+                case "JsonObject":
+                    return "JObject";
                 case "nan":
                     return "null";
                 case "-1e+300":
