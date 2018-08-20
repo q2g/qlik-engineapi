@@ -58,6 +58,7 @@ namespace QlikApiParser
     {
         public List<EngineParameter> Parameters { get; set; } = new List<EngineParameter>();
         public List<EngineResponse> Responses { get; set; } = new List<EngineResponse>();
+        public bool UseGeneric { get; set; } = false;
 
         public EngineClass GetMultipleClass()
         {

@@ -26,14 +26,8 @@
             {
                 SetLoggerSettings();
                 logger.Info("qlik-engineapi-generator");
-                logger.Info("Load log options...");
-                if (args == null || args.Length < 5)
-                    throw new Exception("5 Parameter erwartet.");
-
-                var config = GetConfig(args);
-                if (config == null)
-                    return;
-
+                logger.Info("Load options...");
+                var config = GetConfig();
                 if (!File.Exists(config.SourceFile))
                 {
                     logger.Warn("No source file found. Please check the args.");
@@ -104,20 +98,15 @@
         }
 
         #region Private Methods
-        private static QlikApiConfig GetConfig(string[] args)
+        private static QlikApiConfig GetConfig()
         {
             try
             {
-                var config = new QlikApiConfig()
-                {
-                    SourceFile = args[0],
-                    OutputFolder = args[1],
-                    UseDescription = Convert.ToBoolean(args[2]),
-                    UseQlikResponseLogic = Convert.ToBoolean(args[3]),
-                    NamespaceName = args[4],
-                    AsyncMode = (AsyncMode)Enum.Parse<AsyncMode>(args[5], true),
-                    GenerateCancelationToken = Convert.ToBoolean(args[6]),
-                };
+                var appConfig = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "app.json");
+                var json = File.ReadAllText(appConfig);
+                var config = JsonConvert.DeserializeObject<QlikApiConfig>(json);
+                config.SourceFile = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, config.SourceFile);
+                config.OutputFolder = Path.GetFullPath(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, $"{config.OutputFolder.Replace("/", "\\").TrimEnd('\\')}\\"));
                 return config;
             }
             catch (Exception ex)
@@ -146,37 +135,11 @@
 
             try
             {
-                var appPath = PlatformServices.Default.Application.ApplicationBasePath;
-                var files = Directory.GetFiles(appPath, "*.*", SearchOption.TopDirectoryOnly);
-                var appConfigFiles = files.Where(f => f.ToLowerInvariant().EndsWith("\\app.config") ||
-                       f.ToLowerInvariant().EndsWith("\\app.json")).ToList();
-                if (files != null && appConfigFiles.Count > 0)
-                {
-                    if (appConfigFiles.Count > 1)
-                        throw new Exception("Too many logger configs found.");
-
-                    path = files.FirstOrDefault();
-                    var extention = Path.GetExtension(path);
-                    switch (extention)
-                    {
-                        case ".json":
-                            logger.Factory.Configuration = new XmlLoggingConfiguration(GetXmlReader(path), Path.GetFileName(path));
-                            break;
-                        case ".config":
-                            logger.Factory.Configuration = new XmlLoggingConfiguration(path);
-                            break;
-                        default:
-                            throw new Exception($"unknown log format {extention}.");
-                    }
-                }
-                else
-                {
-                    throw new Exception("No logger config loaded.");
-                }
-
-                 var logFile = files.FirstOrDefault(f => Path.GetExtension(f) == ".log");
-                 if(logFile != null)
-                   File.Delete(logFile);
+                var logConfigPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "app.config");
+                logger.Factory.Configuration = new XmlLoggingConfiguration(logConfigPath);
+                var logFile = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "qlikapiparser.log");
+                if (File.Exists(logFile))
+                    File.Delete(logFile);
             }
             catch
             {
