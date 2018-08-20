@@ -171,8 +171,10 @@ namespace QlikApiParser
                     {
                         engineProperty.Type = GenerateEnumType(engineProperty.Name);
                         engineProperty.IsEnumType = true;
-                        var engineEnum = new EngineEnum();
-                        engineEnum.Name = engineProperty.Name;
+                        var engineEnum = new EngineEnum()
+                        {
+                             Name = engineProperty.Name,
+                        };
                         foreach (var enumValue in engineProperty.Enum)
                             engineEnum.Values.Add(new EngineEnumValue() { Name = enumValue });
                         var enumResult = EnumExists(engineEnum);
@@ -257,6 +259,8 @@ namespace QlikApiParser
                     returnType = $"Task<{resultClass.Name}>";
                 }
             }
+            if (method.UseGeneric)
+                returnType = "Task<T>";
             var methodBuilder = new StringBuilder();
             if (!String.IsNullOrEmpty(description))
                 methodBuilder.AppendLine(description);
@@ -297,7 +301,10 @@ namespace QlikApiParser
             }
             if (method.Deprecated)
                 methodBuilder.AppendLine(QlikApiUtils.Indented("[ObsoleteAttribute]", 2));
-            methodBuilder.AppendLine(QlikApiUtils.Indented($"{returnType} {method.Name}{asyncValue}({parameterValue}{cancellationToken});", 2));
+            var tvalue = String.Empty;
+            if (method.UseGeneric)
+                tvalue = "<T>";
+            methodBuilder.AppendLine(QlikApiUtils.Indented($"{returnType} {method.Name}{asyncValue}{tvalue}({parameterValue}{cancellationToken});", 2));
             return methodBuilder.ToString();
         }
 
@@ -426,9 +433,13 @@ namespace QlikApiParser
                                 engineInterface.Methods.Add(engineMethod);
                                 if (engineMethod.Parameters.Count > 0)
                                 {
+                                    //T version from original
+                                    var jsonMethod = CreateMethodClone(engineMethod);
+                                    jsonMethod.UseGeneric = true;
+                                    engineInterface.Methods.Add(jsonMethod);
+
                                     // Add a JObject version as parameter
-                                    var json = JsonConvert.SerializeObject(engineMethod);
-                                    var jsonMethod = JsonConvert.DeserializeObject<EngineMethod>(json);
+                                    jsonMethod = CreateMethodClone(engineMethod);
                                     jsonMethod.Parameters.Clear();
                                     jsonMethod.Parameters.Add(new EngineParameter()
                                     {
@@ -437,6 +448,11 @@ namespace QlikApiParser
                                         Required = true,
                                         Description = "Qlik Parameter as JSON object.",
                                     });
+                                    engineInterface.Methods.Add(jsonMethod);
+
+                                    //T version from JObejct
+                                    jsonMethod = CreateMethodClone(jsonMethod);
+                                    jsonMethod.UseGeneric = true;
                                     engineInterface.Methods.Add(jsonMethod);
                                 }
                             }
@@ -448,6 +464,12 @@ namespace QlikApiParser
             {
                 logger.Error(ex, "The methods could not be added.");
             }
+        }
+
+        private EngineMethod CreateMethodClone(EngineMethod currentMethod)
+        {
+            var json = JsonConvert.SerializeObject(currentMethod);
+            return JsonConvert.DeserializeObject<EngineMethod>(json);
         }
         #endregion
 

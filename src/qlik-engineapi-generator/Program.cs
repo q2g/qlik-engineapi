@@ -137,7 +137,9 @@
             {
                 var logConfigPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "app.config");
                 logger.Factory.Configuration = new XmlLoggingConfiguration(logConfigPath);
-                File.Delete(logConfigPath);
+                var logFile = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "qlikapiparser.log");
+                if (File.Exists(logFile))
+                    File.Delete(logFile);
             }
             catch
             {
