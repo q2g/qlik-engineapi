@@ -7,6 +7,8 @@ namespace QlikApiParser
     using System.Collections.Generic;
     using System.Text;
     using NLog;
+    using Newtonsoft.Json;
+    using Newtonsoft.Json.Serialization;
     #endregion
 
     public enum AsyncMode
@@ -15,18 +17,29 @@ namespace QlikApiParser
         SHOW
     }
 
+    [JsonObject(ItemNullValueHandling = NullValueHandling.Ignore,
+                NamingStrategyType = typeof(CamelCaseNamingStrategy))]
     public class QlikApiConfig
     {
         #region  Properties
+        [JsonProperty(Required = Required.Always)]
         public string SourceFile { get; set; }
+        [JsonProperty(Required = Required.Always)]
         public string OutputFolder { get; set; }
+        [JsonProperty(Required = Required.Always)]
         public string NamespaceName { get; set; }
+        [JsonProperty]
         public bool UseQlikResponseLogic { get; set; } = true;
+        [JsonProperty]
         public bool UseDescription { get; set; } = true;
-        public AsyncMode AsyncMode { get; set; }
+        [JsonProperty]
+        public AsyncMode AsyncMode { get; set; } = AsyncMode.SHOW;
+        [JsonProperty]
         public bool GenerateCancelationToken { get; set; } = true;
 
+        [JsonIgnore]
         public string BaseObjectInterfaceClassName { get; } = "ObjectInterface";
+        [JsonIgnore]
         public string BaseObjectInterfaceName
         {
             get { return $"I{BaseObjectInterfaceClassName }"; }

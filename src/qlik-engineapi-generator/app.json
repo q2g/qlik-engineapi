@@ -1,0 +1,9 @@
+{
+  "SourceFile": "jsonrpcapi.json",
+  "OutputFolder": "../../../../qlik-engineapi-nuget/",
+  "UseDescription": true,
+  "UseQlikResponse": true,
+  "NamespaceName": "Qlik.EngineAPI",
+  "AsyncMode": "SHOW",
+  "GenerateCancelationToken": true
+}

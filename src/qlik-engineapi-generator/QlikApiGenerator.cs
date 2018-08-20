@@ -171,8 +171,10 @@ namespace QlikApiParser
                     {
                         engineProperty.Type = GenerateEnumType(engineProperty.Name);
                         engineProperty.IsEnumType = true;
-                        var engineEnum = new EngineEnum();
-                        engineEnum.Name = engineProperty.Name;
+                        var engineEnum = new EngineEnum()
+                        {
+                             Name = engineProperty.Name,
+                        };
                         foreach (var enumValue in engineProperty.Enum)
                             engineEnum.Values.Add(new EngineEnumValue() { Name = enumValue });
                         var enumResult = EnumExists(engineEnum);
@@ -245,6 +247,10 @@ namespace QlikApiParser
             if (response != null)
             {
                 returnType = $"Task<{QlikApiUtils.GetDotNetType(response.GetRealType())}>";
+                var serviceType = response.GetServiceType();
+                if (serviceType != null)
+                    returnType = $"Task<{serviceType}>";
+
                 if (method?.Responses?.Count > 1 || !Config.UseQlikResponseLogic)
                 {
                     logger.Debug($"The method {method?.Name} has {method?.Responses?.Count} responses.");
@@ -253,6 +259,8 @@ namespace QlikApiParser
                     returnType = $"Task<{resultClass.Name}>";
                 }
             }
+            if (method.UseGeneric)
+                returnType = "Task<T>";
             var methodBuilder = new StringBuilder();
             if (!String.IsNullOrEmpty(description))
                 methodBuilder.AppendLine(description);
@@ -273,7 +281,7 @@ namespace QlikApiParser
             var parameter = new StringBuilder();
             if (method.Parameters.Count > 0)
             {
-                //Sortieren nach Required, muss vorne sein???
+                //Sort parameters by required
                 var parameters = method.Parameters.OrderBy(p => p.Required == false);
                 foreach (var para in parameters)
                 {
@@ -291,7 +299,12 @@ namespace QlikApiParser
                 else
                     cancellationToken = ", CancellationToken? token = null";
             }
-            methodBuilder.AppendLine(QlikApiUtils.Indented($"{returnType} {method.Name}{asyncValue}({parameterValue}{cancellationToken});", 2));
+            if (method.Deprecated)
+                methodBuilder.AppendLine(QlikApiUtils.Indented("[ObsoleteAttribute]", 2));
+            var tvalue = String.Empty;
+            if (method.UseGeneric)
+                tvalue = "<T>";
+            methodBuilder.AppendLine(QlikApiUtils.Indented($"{returnType} {method.Name}{asyncValue}{tvalue}({parameterValue}{cancellationToken});", 2));
             return methodBuilder.ToString();
         }
 
@@ -317,6 +330,14 @@ namespace QlikApiParser
                             case "object":
                                 engineClass = jObject.ToObject<EngineClass>();
                                 engineClass.Name = jProperty.Name;
+
+                                //special case for .NET JObject - JsonObject is ignored
+                                if (engineClass.Name == "JsonObject")
+                                {
+                                    logger.Info("The class \"JsonObject\" is ignored because \"JObject\" already exists in the namespace Newtonsoft.");
+                                    continue;
+                                }
+                                
                                 engineClass.SeeAlso = GetValueFromProperty<List<string>>(jObject, "x-qlik-see-also");
                                 var properties = ReadProperties(jObject, "properties", engineClass.Name);
                                 if (properties.Count == 0)
@@ -410,6 +431,30 @@ namespace QlikApiParser
                                     }
                                 }
                                 engineInterface.Methods.Add(engineMethod);
+                                if (engineMethod.Parameters.Count > 0)
+                                {
+                                    //T version from original
+                                    var jsonMethod = CreateMethodClone(engineMethod);
+                                    jsonMethod.UseGeneric = true;
+                                    engineInterface.Methods.Add(jsonMethod);
+
+                                    // Add a JObject version as parameter
+                                    jsonMethod = CreateMethodClone(engineMethod);
+                                    jsonMethod.Parameters.Clear();
+                                    jsonMethod.Parameters.Add(new EngineParameter()
+                                    {
+                                        Name = "param",
+                                        Type = "JObject",
+                                        Required = true,
+                                        Description = "Qlik Parameter as JSON object.",
+                                    });
+                                    engineInterface.Methods.Add(jsonMethod);
+
+                                    //T version from JObejct
+                                    jsonMethod = CreateMethodClone(jsonMethod);
+                                    jsonMethod.UseGeneric = true;
+                                    engineInterface.Methods.Add(jsonMethod);
+                                }
                             }
                         }
                     }
@@ -419,6 +464,12 @@ namespace QlikApiParser
             {
                 logger.Error(ex, "The methods could not be added.");
             }
+        }
+
+        private EngineMethod CreateMethodClone(EngineMethod currentMethod)
+        {
+            var json = JsonConvert.SerializeObject(currentMethod);
+            return JsonConvert.DeserializeObject<EngineMethod>(json);
         }
         #endregion
 
@@ -496,6 +547,14 @@ namespace QlikApiParser
                             fileContent.AppendLine(QlikApiUtils.Indented($"{QlikApiUtils.GetDotNetType(property.Type)} {property.Name} {{ get; set; }}", 2));
                         foreach (var methodObject in interfaceObject.Methods)
                             fileContent.AppendLine(GetFormatedMethod(methodObject));
+
+                        if (Config.BaseObjectInterfaceName == interfaceObject.Name)
+                        {
+                            fileContent.AppendLine(QlikApiUtils.Indented("event EventHandler Changed;", 2));
+                            fileContent.AppendLine(QlikApiUtils.Indented("event EventHandler Closed;", 2));
+                            fileContent.AppendLine(QlikApiUtils.Indented("void OnChanged();", 2));
+                        }
+
                         fileContent.AppendLine(QlikApiUtils.Indented("}", 1));
                         if (lineCounter < interfaceObjects.Count)
                             fileContent.AppendLine();

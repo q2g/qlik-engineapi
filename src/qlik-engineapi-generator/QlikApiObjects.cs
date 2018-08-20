@@ -33,6 +33,7 @@ namespace QlikApiParser
         public string Name { get; set; }
         public string Description { get; set; }
         public List<string> SeeAlso { get; set; }
+        public bool Deprecated { get; set; }
 
         public override string ToString()
         {
@@ -57,6 +58,7 @@ namespace QlikApiParser
     {
         public List<EngineParameter> Parameters { get; set; } = new List<EngineParameter>();
         public List<EngineResponse> Responses { get; set; } = new List<EngineResponse>();
+        public bool UseGeneric { get; set; } = false;
 
         public EngineClass GetMultipleClass()
         {
@@ -78,6 +80,10 @@ namespace QlikApiParser
                         Required = response.Required,
                         Format = response.Format,
                     };
+
+                    var serviceType = response.GetServiceType();
+                    if (serviceType != null)
+                        engineProprty.Type = serviceType;
                     result.Properties.Add(engineProprty);
                 }
                 return result;
@@ -117,6 +123,20 @@ namespace QlikApiParser
             if (Type == "array")
                 return $"List<{QlikApiUtils.GetDotNetType(result)}>";
             return result;
+        }
+
+        public string GetServiceType()
+        {
+            if (Schema == null)
+                return null;
+
+            var service = Schema["$service"]?.ToObject<string>() ?? null;
+            if (service != null)
+            {
+                service = service?.Split('/')?.LastOrDefault() ?? null;
+                return $"I{service}";
+            }
+            return null;
         }
 
         public string GetRealType()
@@ -263,7 +283,10 @@ namespace QlikApiParser
 
         public string GetRefType()
         {
-            return Ref?.Split('/')?.LastOrDefault() ?? null;
+            var result = Ref?.Split('/')?.LastOrDefault() ?? null;
+            if(result == "JsonObject")
+              return "JObject";
+            return result;
         }
 
         public List<EngineEnum> GetConvertedEnums()
