@@ -431,13 +431,14 @@ namespace QlikApiParser
                                     }
                                 }
                                 engineInterface.Methods.Add(engineMethod);
+
+                                //T version from original
+                                var jsonMethod = CreateMethodClone(engineMethod);
+                                jsonMethod.UseGeneric = true;
+                                engineInterface.Methods.Add(jsonMethod);
+
                                 if (engineMethod.Parameters.Count > 0)
                                 {
-                                    //T version from original
-                                    var jsonMethod = CreateMethodClone(engineMethod);
-                                    jsonMethod.UseGeneric = true;
-                                    engineInterface.Methods.Add(jsonMethod);
-
                                     // Add a JObject version as parameter
                                     jsonMethod = CreateMethodClone(engineMethod);
                                     jsonMethod.Parameters.Clear();
