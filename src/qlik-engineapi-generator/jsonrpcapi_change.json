@@ -7,7 +7,12 @@
                         {
                             "name": "qExportState",
                             "default": "qExportState.EXPORT_ALL",
-                            "items": {},
+                            "items": {
+								"enumShort":[
+									["EXPORT_POSSIBLE","P"],
+									["EXPORT_ALL","A"]
+								]
+							},
                             "schema": {
                                 "$ref": "#/definitions/qExportState"
                             }
@@ -43,7 +48,27 @@
                             }
                         }
                     ]
-                }
+                },
+				"GetHyperCubeReducedData":
+				{
+					"parameters": [
+                        {
+                            "name": "qReductionMode",
+                            "items": {
+								"enumShort":[
+									["DATA_REDUCTION_NONE","N"],
+									["DATA_REDUCTION_ONEDIM","D1"],
+									["DATA_REDUCTION_SCATTERED","S"],
+									["DATA_REDUCTION_CLUSTERED","C"],
+									["DATA_REDUCTION_STACKED","ST"]
+								]
+							},
+                            "schema": {
+                                "$ref": "#/definitions/qExportState"
+                            }
+                        }
+                    ]
+				}
             }
         },
         "Doc": {
@@ -296,6 +321,47 @@
                 },
                 "qIsOtherCell": {
                     "default": false
+                },
+				"qState": {
+					"enumShort":[
+									["LOCKED","L"],
+									["SELECTED","S"],
+									["OPTION","O"],
+									["DESELECTED","D"],
+									["ALTERNATIVE","A"],
+									["EXCLUDED","X"],
+									["EXCL_SELECTED","XS"],
+									["EXCL_LOCKED","XL"]
+								]
+                }
+            }
+        },	
+		"NxFieldSelectionInfo": {
+            "properties": {
+                "qFieldSelectionMode": {
+					"enumShort":[
+									["SELECTION_MODE_NORMAL","NORMAL"],
+									["SELECTION_MODE_AND","AND"],
+									["SELECTION_MODE_NOT","NOT"]
+								]
+                }
+            }
+        },
+		"FieldAttributes": {
+            "properties": {
+                "qType": {
+					"enumShort":[
+									["UNKNOWN","U"],
+									["ASCII","A"],
+									["INTEGER","I"],
+									["REAL","R"],
+									["FIX","F"],
+									["MONEY","M"],
+									["DATE","D"],
+									["TIME","T"],
+									["TIMESTAMP","TS"],
+									["INTERVAL","IV"]
+								]
                 }
             }
         },
@@ -343,7 +409,26 @@
         "NxDimensionInfo": {
             "properties": {
                 "qSortIndicator": {
-                    "default": "NX_SORT_INDICATE_NONE"
+                    "default": "NX_SORT_INDICATE_NONE",
+					"enumShort":[
+									["NX_SORT_INDICATE_NONE","N"],
+									["NX_SORT_INDICATE_ASC","A"],
+									["NX_SORT_INDICATE_DESC","D"]
+								]
+                },
+				"qDimensionType": {
+					"enumShort":[
+									["NX_DIMENSION_TYPE_DISCRETE","D"],
+									["NX_DIMENSION_TYPE_NUMERIC","N"],
+									["NX_DIMENSION_TYPE_TIME","T"]
+								]
+                },
+				"qGrouping": {
+					"enumShort":[
+									["GRP_NX_NONE","N"],
+									["GRP_NX_HIEARCHY","H"],
+									["GRP_NX_COLLECTION","C"]
+								]
                 }
             }
         },
