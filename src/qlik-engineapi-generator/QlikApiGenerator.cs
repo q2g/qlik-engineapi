@@ -78,10 +78,21 @@ namespace QlikApiParser
             builder.AppendLine(QlikApiUtils.Indented("{", 1));
             foreach (var enumValue in enumObject.Values)
             {
-                var eValue = enumValue.Name;
                 if (enumValue.Value.HasValue)
-                    eValue += $" = {enumValue.Value}";
-                builder.AppendLine(QlikApiUtils.Indented($"{eValue},", 2));
+                {
+                    var numValue = $" = {enumValue.Value}";
+                    builder.AppendLine(QlikApiUtils.Indented($"{enumValue.Name}{numValue},", 2));
+                }
+                else
+                {
+                    builder.AppendLine(QlikApiUtils.Indented($"{enumValue.Name},", 2));
+                }
+
+                if (!String.IsNullOrEmpty(enumValue.ShotValue))
+                {
+                    var shotValue = $"{enumValue.ShotValue} = ";
+                    builder.AppendLine(QlikApiUtils.Indented($"{shotValue}{enumValue.Name},", 2));
+                }
             }
             builder.AppendLine(QlikApiUtils.Indented("}", 1));
             return builder.ToString().TrimEnd(',').TrimEnd();
@@ -103,7 +114,11 @@ namespace QlikApiParser
                 {
                     var hit = item.Values.FirstOrDefault(v => v.Name == enumValue.Name);
                     if (hit != null)
+                    {
                         hitCount++;
+                        if (!String.IsNullOrEmpty(enumValue.ShotValue))
+                            hit.ShotValue = enumValue.ShotValue;
+                    }
                 }
             }
 
@@ -138,6 +153,7 @@ namespace QlikApiParser
                     {
                         propObject = property.First as JObject;
                         engineProperty = propObject.ToObject<EngineProperty>();
+                        engineProperty.EnumShot = (propObject as JObject)["enumShort"] as JToken ?? null;
                     }
                     engineProperty.Name = jprop.Name;
                     if (engineProperty.Description != null && engineProperty.Description.Contains("The default value is"))
@@ -176,7 +192,10 @@ namespace QlikApiParser
                              Name = engineProperty.Name,
                         };
                         foreach (var enumValue in engineProperty.Enum)
-                            engineEnum.Values.Add(new EngineEnumValue() { Name = enumValue });
+                        {
+                            var shotName = engineEnum.GetShotEnumName(enumValue, engineProperty.EnumShot);
+                            engineEnum.Values.Add(new EngineEnumValue() { Name = enumValue, ShotValue = shotName });
+                        }
                         var enumResult = EnumExists(engineEnum);
                         if (enumResult == null)
                         {
