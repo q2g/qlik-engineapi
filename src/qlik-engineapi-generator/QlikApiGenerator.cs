@@ -147,10 +147,6 @@ namespace QlikApiParser
                 {
                     var jprop = property as JProperty;
                     logger.Debug($"Property name: {jprop.Name}");
-
-                    if (jprop.Name == "qSortIndicator")
-                        logger.Debug("TEST");
-                  
                     var engineProperty = new EngineProperty();
                     dynamic propObject = null;
                     if (property.First.Type == JTokenType.Object)
