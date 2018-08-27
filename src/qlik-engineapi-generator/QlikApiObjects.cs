@@ -155,14 +155,15 @@ namespace QlikApiParser
                 var enumObj = Items["enum"] ?? null;
                 if (enumObj != null)
                 {
-                    var engineEnum = new EngineEnum();
-                    engineEnum.Name = Name;
+                    var engineEnum = new EngineEnum() { Name = Name };
                     Type = Name;
                     var childen = enumObj.Children();
                     foreach (var child in childen)
                     {
                         var name = child.ToObject<string>();
-                        engineEnum.Values.Add(new EngineEnumValue() { Name = name });
+                        var shotEnumValues = Items["enumShort"] ?? null;
+                        var shotName = engineEnum.GetShotEnumName(name, shotEnumValues);
+                        engineEnum.Values.Add(new EngineEnumValue() { Name = name, ShotValue = shotName });
                     }
                     results.Add(engineEnum);
                 }
@@ -218,6 +219,21 @@ namespace QlikApiParser
             return true;
         }
 
+        public string GetShotEnumName(string fullName, JToken shotEnumValues)
+        {
+            if (shotEnumValues == null)
+                return null;
+
+            var values = shotEnumValues.ToObject<JArray>();
+            foreach (var shotenum in shotEnumValues)
+            {
+                var array = shotenum.ToObject<string[]>();
+                if (fullName == array[0])
+                    return array[1];
+            }
+            return null;
+        }
+
         public void RenameValues()
         {
             try
@@ -267,6 +283,7 @@ namespace QlikApiParser
     public class EngineEnumValue : EngineBase
     {
         public int? Value { get; set; }
+        public string ShotValue { get; set; }
     }
 
     [JsonObject(ItemNullValueHandling = NullValueHandling.Ignore,
@@ -278,14 +295,15 @@ namespace QlikApiParser
     public class EngineProperty : EngineAdvanced
     {
         public List<string> Enum { get; set; }
+        public JToken EnumShot { get; set; }
         public bool IsEnumType { get; set; }
         public string Ref { get; set; }
 
         public string GetRefType()
         {
             var result = Ref?.Split('/')?.LastOrDefault() ?? null;
-            if(result == "JsonObject")
-              return "JObject";
+            if (result == "JsonObject")
+                return "JObject";
             return result;
         }
 
