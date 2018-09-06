@@ -46,7 +46,7 @@
                 {
                     var changeJsonObject = GetJsonObject(changeJsonFile);
                     origJsonObject.Merge(changeJsonObject);
-                    var keyNames = new List<string>() {"qType", "qFieldSelectionMode", "qState", "qGrouping", "qSortIndicator",
+                    var keyNames = new List<string>() {"qMode", "qType", "qFieldSelectionMode", "qState", "qGrouping", "qSortIndicator",
                                                        "qDimensionType", "qExportState", "qReductionMode", "qMatchingFieldMode",
                                                        "qGroup" };
                     var parameters = origJsonObject.SelectTokens("$...parameters").ToList();
