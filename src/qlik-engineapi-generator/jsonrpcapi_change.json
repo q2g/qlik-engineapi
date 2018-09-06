@@ -394,6 +394,18 @@
         }
       }
     },
+    "HyperCubeDef": {
+      "properties": {
+        "qMode": {
+          "enumShort": [
+            [ "DATA_MODE_STRAIGHT", "S" ],
+            [ "DATA_MODE_PIVOT", "P" ],
+            [ "DATA_MODE_PIVOT_STACK", "K" ],
+            [ "DATA_MODE_TREE", "T" ]
+          ]
+        }
+      }
+    },
     "BookmarkFieldItem": {
       "properties": {
         "qAndMode": {
