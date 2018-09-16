@@ -57,7 +57,7 @@
 
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
-    <PackageReference Include="enigma.net" Version="0.10.0-alpha0021" />
+    <PackageReference Include="enigma.net" Version="0.10.0-alpha0022" />
     <PackageReference Include="GitVersionTask" Version="4.0.0-beta0008">      
       <PrivateAssets>All</PrivateAssets>
     </PackageReference>
