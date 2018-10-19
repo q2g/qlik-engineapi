@@ -1,5 +1,5 @@
 ignore:
   sha:
     - 14eb73e7364c1f397fe3fd88360807faedebc937
-	- 71af25cab07d137fc57db01f17026f76dcc97ff9
-#  regex: dependabot
+    - 71af25cab07d137fc57db01f17026f76dcc97ff9	
+# regex: dependabot
