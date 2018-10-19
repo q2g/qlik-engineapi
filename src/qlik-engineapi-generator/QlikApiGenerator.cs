@@ -526,8 +526,7 @@ namespace QlikApiParser
                 fileContent.AppendLine(QlikApiUtils.Indented("using Newtonsoft.Json;", 1));
                 fileContent.AppendLine(QlikApiUtils.Indented("using Newtonsoft.Json.Linq;", 1));
                 fileContent.AppendLine(QlikApiUtils.Indented("using System.Threading.Tasks;", 1));
-                fileContent.AppendLine(QlikApiUtils.Indented("using System.Threading;", 1));
-                fileContent.AppendLine(QlikApiUtils.Indented("using enigma;", 1));
+                fileContent.AppendLine(QlikApiUtils.Indented("using System.Threading;", 1));                
                 fileContent.AppendLine(QlikApiUtils.Indented("#endregion", 1));
                 fileContent.AppendLine();
                 var lineCounter = 0;
@@ -556,11 +555,7 @@ namespace QlikApiParser
                     foreach (EngineInterface interfaceObject in interfaceObjects)
                     {
                         lineCounter++;
-
-                        if (interfaceObject.Name == "IObjectInterface")
-                            continue;
-                            // TODO fix that simple workaround to remove the ObjectInterface
-
+                        
                         //Special for ObjectInterface => Add IObjectInterface
                             var implInterface = String.Empty;
                         if (Config.BaseObjectInterfaceName != interfaceObject.Name)
