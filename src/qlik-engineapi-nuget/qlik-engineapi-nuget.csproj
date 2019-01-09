@@ -40,7 +40,7 @@
     </Otherwise>
   </Choose>
 
-  <Target Name="CheckFileAvailable" BeforeTargets="BeforeBuild" >
+  <Target Name="CheckFileAvailable" BeforeTargets="BeforeBuild">
     <Error Text="Codefiles have to be generated" Condition="!Exists('$(ProjectDir)\Interfaces.cs')" />    
   </Target>
 
@@ -52,15 +52,15 @@
   </Target>
 
   <ItemGroup>
-    <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />    
+    <PackageReference Include="Newtonsoft.Json" Version="12.0.1" />    
     <PackageReference Include="GitVersionTask" Version="4.0.0" PrivateAssets="All" />
-    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0-beta2-18618-05" PrivateAssets="All"/>
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0-beta2-18618-05" PrivateAssets="All" />
   </ItemGroup>
 
   <Target Name="DeleteFiles" AfterTargets="Clean">
     <ItemGroup>
       <FilesToClean Include="$(ProjectDir)\*.cs" />
     </ItemGroup>
-    <Delete Files="@(FilesToClean)"/>
+    <Delete Files="@(FilesToClean)" />
   </Target>
 </Project>
