@@ -2,16 +2,16 @@ namespace QlikApiParser
 {
     #region Usings
     using System;
+    using System.Collections.Generic;
+    using System.ComponentModel;
     using System.IO;
+    using System.Linq;
+    using System.Text;
+    using System.Threading.Tasks;
     using Newtonsoft.Json;
     using Newtonsoft.Json.Linq;
-    using NLog;
-    using System.Linq;
-    using System.Collections.Generic;
     using Newtonsoft.Json.Serialization;
-    using System.Text;
-    using System.ComponentModel;
-    using System.Threading.Tasks;
+    using NLog;
     #endregion
 
     public class QlikApiGenerator
@@ -233,7 +233,7 @@ namespace QlikApiParser
             };
 
             if (Config.GenerateCancelationToken)
-                descBuilder.Param.Add(new EngineParameter() {  Type = "CancellationToken?", Name = "token", Description = "Propagates notification that operations should be canceled." });
+                descBuilder.Param.Add(new EngineParameter() { Type = "CancellationToken?", Name = "token", Description = "Propagates notification that operations should be canceled." });
 
             if (response != null)
                 descBuilder.Return = response.Description;
@@ -334,7 +334,7 @@ namespace QlikApiParser
                                     logger.Info("The class \"JsonObject\" is ignored because \"JObject\" already exists in the namespace Newtonsoft.");
                                     continue;
                                 }
-                                
+
                                 engineClass.SeeAlso = GetValueFromProperty<List<string>>(jObject, "x-qlik-see-also");
                                 var properties = ReadProperties(jObject, "properties", engineClass.Name);
                                 if (properties.Count == 0)
@@ -467,7 +467,7 @@ namespace QlikApiParser
                 {
                     foreach (var property in engineClass.Properties)
                     {
-                        if(!String.IsNullOrEmpty(property.Ref))
+                        if (!String.IsNullOrEmpty(property.Ref))
                         {
                             var propertyType = EngineObjects.FirstOrDefault(c => c.Name == property.GetRefType());
                             if (propertyType?.EngType == EngineType.ENUM)
@@ -497,7 +497,7 @@ namespace QlikApiParser
             }
         }
 
-        public void SaveToCSharp(QlikApiConfig config, List<IEngineObject> engineObjects, string savePath)
+        public void SaveToCSharp(QlikApiConfig config, List<IEngineObject> engineObjects, string savePath, string injectPragma = null)
         {
             try
             {
@@ -513,9 +513,11 @@ namespace QlikApiParser
                 fileContent.AppendLine(QlikApiUtils.Indented("using Newtonsoft.Json;", 1));
                 fileContent.AppendLine(QlikApiUtils.Indented("using Newtonsoft.Json.Linq;", 1));
                 fileContent.AppendLine(QlikApiUtils.Indented("using System.Threading.Tasks;", 1));
-                fileContent.AppendLine(QlikApiUtils.Indented("using System.Threading;", 1));                
+                fileContent.AppendLine(QlikApiUtils.Indented("using System.Threading;", 1));
                 fileContent.AppendLine(QlikApiUtils.Indented("#endregion", 1));
                 fileContent.AppendLine();
+                if (!string.IsNullOrWhiteSpace(injectPragma))
+                    fileContent.AppendLine(injectPragma);
                 var lineCounter = 0;
                 var enumObjects = engineObjects.Where(d => d.EngType == EngineType.ENUM).ToList();
                 if (enumObjects.Count > 0)
