@@ -46,17 +46,17 @@
                 {
                     var changeJsonObject = GetJsonObject(changeJsonFile);
                     origJsonObject.Merge(changeJsonObject);
-                    var keyNames = new List<string>() {"qMode", "qType", "qFieldSelectionMode", "qState", "qGrouping", "qSortIndicator",
-                                                       "qDimensionType", "qExportState", "qReductionMode", "qMatchingFieldMode",
-                                                       "qGroup" };
+
+                    var keyNames = new List<string>() {"qExportState", "qMatchingFieldMode", "qGroup", "qPath", "qRanges", "qOrMode",
+                                                       "qDeselectOnlyOneSelected", "qNullSize", "qConditions", "qParams", "qListDef" };
                     var parameters = origJsonObject.SelectTokens("$...parameters").ToList();
                     var jArray = new JArray();
                     for (int i = 0; i < parameters.Count; i++)
                     {
-                         jArray = parameters[i].ToObject<JArray>();
-                         parameters[i].Replace(origJsonObject.MergeArray(jArray, keyNames));
+                        jArray = parameters[i].ToObject<JArray>();
+                        parameters[i].Replace(origJsonObject.MergeArray(jArray, keyNames));
                     }
-                    keyNames = new List<string>() {"qReturn"};
+                    keyNames = new List<string>() { "qReturn" };
                     var responses = origJsonObject.SelectTokens("$...responses").ToList();
                     for (int i = 0; i < responses.Count; i++)
                     {
@@ -64,7 +64,7 @@
                         responses[i].Replace(origJsonObject.MergeArray(jArray, keyNames));
                     }
                 }
-                
+
                 logger.Info("Start parsing...");
                 var qlikApiGenerator = new QlikApiGenerator(config);
                 var engineObjects = qlikApiGenerator.ReadJson(origJsonObject);

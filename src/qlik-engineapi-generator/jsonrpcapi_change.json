@@ -1,548 +1,475 @@
 {
-    "services": {
-        "GenericObject": {
-            "methods": {
-                "ExportData": {
-                    "parameters": [
-                        {
-                            "name": "qExportState",
-                            "default": "qExportState.EXPORT_ALL",
-                            "items": {
-								"enumShort":[
-									["EXPORT_POSSIBLE","P"],
-									["EXPORT_ALL","A"]
-								]
-							},
-                            "schema": {
-                                "$ref": "#/definitions/qExportState"
-                            }
-                        }
-                    ]
-                },
-                "GetChild": {
-                    "responses": [
-                        {
-                            "name": "qReturn",
-                            "schema": {
-                                "$service": "#/service/GenericObject"
-                            }
-                        }
-                    ]
-                },
-                "CreateChild": {
-                    "responses": [
-                        {
-                            "name": "qReturn",
-                            "schema": {
-                                "$service": "#/service/GenericObject"
-                            }
-                        }
-                    ]
-                },
-                "GetSnapshotObject": {
-                    "responses": [
-                        {
-                            "name": "qReturn",
-                            "schema": {
-                                "$service": "#/service/GenericBookmark"
-                            }
-                        }
-                    ]
-                },
-				"GetHyperCubeReducedData":
-				{
-					"parameters": [
-                        {
-                            "name": "qReductionMode",
-                            "items": {
-								"enumShort":[
-									["DATA_REDUCTION_NONE","N"],
-									["DATA_REDUCTION_ONEDIM","D1"],
-									["DATA_REDUCTION_SCATTERED","S"],
-									["DATA_REDUCTION_CLUSTERED","C"],
-									["DATA_REDUCTION_STACKED","ST"]
-								]
-							},
-                            "schema": {
-                                "$ref": "#/definitions/qExportState"
-                            }
-                        }
-                    ]
-				}
+  "components": {
+    "schemas": {
+      "ObjectInterface": {
+        "type": "object"
+      },
+      "NxCell": {
+        "properties": {
+          "qIsEmpty": {
+            "default": false
+          },
+          "qIsTotalCell": {
+            "default": false
+          },
+          "qIsOtherCell": {
+            "default": false
+          }
+        }
+      },
+      "BookmarkFieldItem": {
+        "properties": {
+          "qAndMode": {
+            "default": false
+          },
+          "qOneAndOnlyOne": {
+            "default": false
+          }
+        }
+      },
+      "NxFieldDescription": {
+        "properties": {
+          "qAndMode": {
+            "default": false
+          }
+        }
+      },
+      "NxInlineDimensionDef": {
+        "properties": {
+          "qActiveField": {
+            "default": 0
+          }
+        }
+      },
+      "NxMeasure": {
+        "properties": {
+          "qSortBy": {
+            "default": "null"
+          }
+        }
+      },
+      "NxInlineMeasureDef": {
+        "properties": {
+          "qAggrFunc": {
+            "default": "null"
+          },
+          "qActiveExpression": {
+            "default": 0
+          }
+        }
+      },
+      "NxDimensionInfo": {
+        "properties": {
+          "qSortIndicator": {
+            "default": "NX_SORT_INDICATE_NONE"
+          }
+        }
+      },
+      "NxMeasureInfo": {
+        "properties": {
+          "qSortIndicator": {
+            "default": "NX_SORT_INDICATE_NONE"
+          }
+        }
+      },
+      "ListObjectDef": {
+        "properties": {
+          "qShowAlternatives": {
+            "default": false
+          }
+        }
+      },
+      "NxCurrentSelectionItem": {
+        "properties": {
+          "qSelectionThreshold": {
+            "default": 6
+          }
+        }
+      },
+      "NxTreeDimensionInfo": {
+        "properties": {
+          "qSortIndicator": {
+            "default": "NX_SORT_INDICATE_NONE"
+          }
+        }
+      },
+      "GenericDimensionInfo": {
+        "properties": {
+          "qAndMode": {
+            "default": false
+          }
+        }
+      },
+      "FieldDescription": {
+        "properties": {
+          "qIsSystem": {
+            "default": false
+          },
+          "qIsHidden": {
+            "default": false
+          },
+          "qIsSemantic": {
+            "default": false
+          },
+          "qDistinctOnly": {
+            "default": false
+          },
+          "qIsLocked": {
+            "default": false
+          },
+          "qAlwaysOneSelected": {
+            "default": false
+          },
+          "qAndMode": {
+            "default": false
+          },
+          "qIsNumeric": {
+            "default": false
+          },
+          "qIsDefinitionOnly": {
+            "default": false
+          }
+        }
+      },
+      "ScriptSyntaxError": {
+        "properties": {
+          "qSecondaryFailure": {
+            "default": false
+          }
+        }
+      },
+      "BNFDef": {
+        "properties": {
+          "qFGList": {
+            "type": "array"
+          }
+        }
+      },
+      "SearchGroupItemMatch": {
+        "properties": {
+          "qFieldSelectionMode": {
+            "type": "array"
+          }
+        }
+      }
+    }
+  },
+  "x-qlik-services": {
+    "GenericObject": {
+      "methods": {
+        "ExportData": {
+          "parameters": [
+            {
+              "name": "qExportState",
+              "default": "NxExportState.EXPORT_ALL"
             }
+          ]
         },
-        "Doc": {
-            "methods": {
-                "GetMatchingFields": {
-                    "parameters": [
-                        {
-                            "name": "qMatchingFieldMode",
-                            "default": "qMatchingFieldMode.MATCHINGFIELDMODE_MATCH_ALL",
-                            "items": {},
-                            "schema": {
-                                "$ref": "#/definitions/qMatchingFieldMode"
-                            }
-                        }
-                    ]
-                },
-                "GetField": {
-                    "responses": [
-                        {
-                            "name": "qReturn",
-                            "schema": {
-                                "$service": "#/service/Field"
-                            }
-                        }
-                    ]
-                },
-                "GetVariable": {
-                    "responses": [
-                        {
-                            "name": "qReturn",
-                            "schema": {
-                                "$service": "#/service/Variable"
-                            }
-                        }
-                    ]
-                },
-                "CreateSessionObject": {
-                    "responses": [
-                        {
-                            "name": "qReturn",
-                            "schema": {
-                                "$service": "#/service/GenericObject"
-                            }
-                        }
-                    ]
-                },
-                "CreateObject": {
-                    "responses": [
-                        {
-                            "name": "qReturn",
-                            "schema": {
-                                "$service": "#/service/GenericObject"
-                            }
-                        }
-                    ]
-                },
-                "GetObject": {
-                    "responses": [
-                        {
-                            "name": "qReturn",
-                            "schema": {
-                                "$service": "#/service/GenericObject"
-                            }
-                        }
-                    ]
-                },
-                "CreateDimension": {
-                    "responses": [
-                        {
-                            "name": "qReturn",
-                            "schema": {
-                                "$service": "#/service/GenericDimension"
-                            }
-                        }
-                    ]
-                },
-                "GetDimension": {
-                    "responses": [
-                        {
-                            "name": "qReturn",
-                            "schema": {
-                                "$service": "#/service/GenericDimension"
-                            }
-                        }
-                    ]
-                },
-                "CreateMeasure": {
-                    "responses": [
-                        {
-                            "name": "qReturn",
-                            "schema": {
-                                "$service": "#/service/GenericMeasure"
-                            }
-                        }
-                    ]
-                },
-                "GetMeasure": {
-                    "responses": [
-                        {
-                            "name": "qReturn",
-                            "schema": {
-                                "$service": "#/service/GenericMeasure"
-                            }
-                        }
-                    ]
-                },
-                "CreateSessionVariable": {
-                    "responses": [
-                        {
-                            "name": "qReturn",
-                            "schema": {
-                                "$service": "#/service/GenericVariable"
-                            }
-                        }
-                    ]
-                },
-                "CreateVariableEx": {
-                    "responses": [
-                        {
-                            "name": "qReturn",
-                            "schema": {
-                                "$service": "#/service/GenericVariable"
-                            }
-                        }
-                    ]
-                },
-                "GetVariableById": {
-                    "responses": [
-                        {
-                            "name": "qReturn",
-                            "schema": {
-                                "$service": "#/service/GenericVariable"
-                            }
-                        }
-                    ]
-                },
-                "GetVariableByName": {
-                    "responses": [
-                        {
-                            "name": "qReturn",
-                            "schema": {
-                                "$service": "#/service/GenericVariable"
-                            }
-                        }
-                    ]
-                },
-                "CreateBookmark": {
-                    "responses": [
-                        {
-                            "name": "qReturn",
-                            "schema": {
-                                "$service": "#/service/GenericBookmark"
-                            }
-                        }
-                    ]
-                },
-                "GetBookmark": {
-                    "responses": [
-                        {
-                            "name": "qReturn",
-                            "schema": {
-                                "$service": "#/service/GenericBookmark"
-                            }
-                        }
-                    ]
-                }
+        "GetChild": {
+          "responses": [
+            {
+              "name": "qReturn",
+              "schema": {
+                "$service": "#/service/GenericObject"
+              }
             }
+          ]
         },
-        "Global": {
-            "methods": {
-                "OpenDoc": {
-                    "responses": [
-                        {
-                            "name": "qReturn",
-                            "schema": {
-                                "$service": "#/service/Doc"
-                            }
-                        }
-                    ]
-                },
-                "CreateDocEx": {
-                    "responses": [
-                        {
-                            "name": "qReturn",
-                            "schema": {
-                                "$service": "#/service/Doc"
-                            }
-                        }
-                    ]
-                },
-                "GetActiveDoc": {
-                    "responses": [
-                        {
-                            "name": "qReturn",
-                            "schema": {
-                                "$service": "#/service/Doc"
-                            }
-                        }
-                    ]
-                },
-                "CreateSessionApp": {
-                    "responses": [
-                        {
-                            "name": "qReturn",
-                            "schema": {
-                                "$service": "#/service/Doc"
-                            }
-                        }
-                    ]
-                },
-                "CreateSessionAppFromApp": {
-                    "responses": [
-                        {
-                            "name": "qReturn",
-                            "schema": {
-                                "$service": "#/service/Doc"
-                            }
-                        }
-                    ]
-                },
-                "GetFunctions": {
-                    "parameters": [
-                        {
-                            "name": "qGroup",
-                            "default": "qGroup_3.FUNC_GROUP_ALL",
-                            "items": {},
-                            "schema": {
-                                "$ref": "#/definitions/qGroup"
-                            }
-                        }
-                    ]
-                }
+        "CreateChild": {
+          "responses": [
+            {
+              "name": "qReturn",
+              "schema": {
+                "$service": "#/service/GenericObject"
+              }
             }
-        }
-    },
-  "definitions": {
-    "ObjectInterface": {
-      "type": "object"
-    },
-    "__NO_ENUM__": {
-      "export": "false"
-    },
-    "NxCell": {
-      "properties": {
-        "qIsEmpty": {
-          "default": false
+          ]
         },
-        "qIsTotalCell": {
-          "default": false
+        "GetSnapshotObject": {
+          "responses": [
+            {
+              "name": "qReturn",
+              "schema": {
+                "$service": "#/service/GenericBookmark"
+              }
+            }
+          ]
         },
-        "qIsOtherCell": {
-          "default": false
-        },
-        "qState": {
-          "enumShort": [
-            [ "LOCKED", "L" ],
-            [ "SELECTED", "S" ],
-            [ "OPTION", "O" ],
-            [ "DESELECTED", "D" ],
-            [ "ALTERNATIVE", "A" ],
-            [ "EXCLUDED", "X" ],
-            [ "EXCL_SELECTED", "XS" ],
-            [ "EXCL_LOCKED", "XL" ]
+        "MultiRangeSelectTreeDataValues": {
+          "parameters": [
+            {
+              "name": "qPath",
+              "description": "PLEASE ADD A DESCRIPTION!!!"
+            },
+            {
+              "name": "qRanges",
+              "description": "PLEASE ADD A DESCRIPTION!!!"
+            },
+            {
+              "name": "qOrMode",
+              "description": "PLEASE ADD A DESCRIPTION!!!"
+            },
+            {
+              "name": "qDeselectOnlyOneSelected",
+              "description": "PLEASE ADD A DESCRIPTION!!!"
+            }
           ]
         }
       }
     },
-    "NxFieldSelectionInfo": {
-      "properties": {
-        "qFieldSelectionMode": {
-          "enumShort": [
-            [ "SELECTION_MODE_NORMAL", "NORMAL" ],
-            [ "SELECTION_MODE_AND", "AND" ],
-            [ "SELECTION_MODE_NOT", "NOT" ]
+    "Doc": {
+      "methods": {
+        "GetMatchingFields": {
+          "parameters": [
+            {
+              "name": "qMatchingFieldMode",
+              "default": "NxMatchingFieldMode.MATCHINGFIELDMODE_MATCH_ALL"
+            }
+          ]
+        },
+        "GetField": {
+          "responses": [
+            {
+              "name": "qReturn",
+              "schema": {
+                "$service": "#/x-qlik-services/Field"
+              }
+            }
+          ]
+        },
+        "GetVariable": {
+          "responses": [
+            {
+              "name": "qReturn",
+              "schema": {
+                "$service": "#/x-qlik-services/Variable"
+              }
+            }
+          ]
+        },
+        "CreateSessionObject": {
+          "responses": [
+            {
+              "name": "qReturn",
+              "schema": {
+                "$service": "#/x-qlik-services/GenericObject"
+              }
+            }
+          ]
+        },
+        "CreateObject": {
+          "responses": [
+            {
+              "name": "qReturn",
+              "schema": {
+                "$service": "#/x-qlik-services/GenericObject"
+              }
+            }
+          ]
+        },
+        "GetObject": {
+          "responses": [
+            {
+              "name": "qReturn",
+              "schema": {
+                "$service": "#/x-qlik-services/GenericObject"
+              }
+            }
+          ]
+        },
+        "CreateDimension": {
+          "responses": [
+            {
+              "name": "qReturn",
+              "schema": {
+                "$service": "#/x-qlik-services/GenericDimension"
+              }
+            }
+          ]
+        },
+        "GetDimension": {
+          "responses": [
+            {
+              "name": "qReturn",
+              "schema": {
+                "$service": "#/x-qlik-services/GenericDimension"
+              }
+            }
+          ]
+        },
+        "CreateMeasure": {
+          "responses": [
+            {
+              "name": "qReturn",
+              "schema": {
+                "$service": "#/x-qlik-services/GenericMeasure"
+              }
+            }
+          ]
+        },
+        "GetMeasure": {
+          "responses": [
+            {
+              "name": "qReturn",
+              "schema": {
+                "$service": "#/x-qlik-services/GenericMeasure"
+              }
+            }
+          ]
+        },
+        "CreateSessionVariable": {
+          "responses": [
+            {
+              "name": "qReturn",
+              "schema": {
+                "$service": "#/x-qlik-services/GenericVariable"
+              }
+            }
+          ]
+        },
+        "CreateVariableEx": {
+          "responses": [
+            {
+              "name": "qReturn",
+              "schema": {
+                "$service": "#/x-qlik-services/GenericVariable"
+              }
+            }
+          ]
+        },
+        "GetVariableById": {
+          "responses": [
+            {
+              "name": "qReturn",
+              "schema": {
+                "$service": "#/x-qlik-services/GenericVariable"
+              }
+            }
+          ]
+        },
+        "GetVariableByName": {
+          "responses": [
+            {
+              "name": "qReturn",
+              "schema": {
+                "$service": "#/x-qlik-services/GenericVariable"
+              }
+            }
+          ]
+        },
+        "CreateBookmark": {
+          "responses": [
+            {
+              "name": "qReturn",
+              "schema": {
+                "$service": "#/x-qlik-services/GenericBookmark"
+              }
+            }
+          ]
+        },
+        "GetBookmark": {
+          "responses": [
+            {
+              "name": "qReturn",
+              "schema": {
+                "$service": "#/x-qlik-services/GenericBookmark"
+              }
+            }
+          ]
+        },
+        "GetTablesAndKeys": {
+          "parameters": [
+            {
+              "name": "qNullSize",
+              "description": "PLEASE ADD A DESCRIPTION!!!"
+            }
+          ]
+        },
+        "GetDatabaseTablePreview": {
+          "parameters": [
+            {
+              "name": "qConditions",
+              "description": "PLEASE ADD A DESCRIPTION!!!"
+            }
+          ]
+        },
+        "DoReloadEx": {
+          "parameters": [
+            {
+              "name": "qParams",
+              "description": "PLEASE ADD A DESCRIPTION!!!"
+            }
+          ]
+        },
+        "GetVariables": {
+          "parameters": [
+            {
+              "name": "qListDef",
+              "description": "PLEASE ADD A DESCRIPTION!!!"
+            }
           ]
         }
       }
     },
-    "NxSelectionCell": {
-      "properties": {
-        "qType": {
-          "enumShort": [
-            [ "NX_CELL_DATA", "D" ],
-            [ "NX_CELL_TOP", "T" ],
-            [ "NX_CELL_LEFT", "L" ]
-          ]
-        }
-      }
-    },
-    "NxPivotDimensionCell": {
-      "properties": {
-        "qType": {
-          "enumShort": [
-            [ "NX_DIM_CELL_VALUE", "V" ],
-            [ "NX_DIM_CELL_EMPTY", "E" ],
-            [ "NX_DIM_CELL_NORMAL", "N" ],
-            [ "NX_DIM_CELL_TOTAL", "T" ],
-            [ "NX_DIM_CELL_OTHER", "O" ],
-            [ "NX_DIM_CELL_AGGR", "A" ],
-            [ "NX_DIM_CELL_PSEUDO", "P" ],
-            [ "NX_DIM_CELL_ROOT", "R" ],
-            [ "NX_DIM_CELL_NULL", "U" ],
-            [ "NX_DIM_CELL_GENERATED", "G" ]
-          ]
-        }
-      }
-    },
-    "FieldAttributes": {
-      "properties": {
-        "qType": {
-          "enumShort": [
-            [ "UNKNOWN", "U" ],
-            [ "ASCII", "A" ],
-            [ "INTEGER", "I" ],
-            [ "REAL", "R" ],
-            [ "FIX", "F" ],
-            [ "MONEY", "M" ],
-            [ "DATE", "D" ],
-            [ "TIME", "T" ],
-            [ "TIMESTAMP", "TS" ],
-            [ "INTERVAL", "IV" ]
-          ]
-        }
-      }
-    },
-    "HyperCubeDef": {
-      "properties": {
-        "qMode": {
-          "enumShort": [
-            [ "DATA_MODE_STRAIGHT", "S" ],
-            [ "DATA_MODE_PIVOT", "P" ],
-            [ "DATA_MODE_PIVOT_STACK", "K" ],
-            [ "DATA_MODE_TREE", "T" ]
-          ]
-        }
-      }
-    },
-    "BookmarkFieldItem": {
-      "properties": {
-        "qAndMode": {
-          "default": false
-        },
-        "qOneAndOnlyOne": {
-          "default": false
-        }
-      }
-    },
-    "NxFieldDescription": {
-      "properties": {
-        "qAndMode": {
-          "default": false
-        }
-      }
-    },
-    "NxInlineDimensionDef": {
-      "properties": {
-        "qActiveField": {
-          "default": 0
-        }
-      }
-    },
-    "NxMeasure": {
-      "properties": {
-        "qSortBy": {
-          "default": "null"
-        }
-      }
-    },
-    "NxInlineMeasureDef": {
-      "properties": {
-        "qAggrFunc": {
-          "default": "null"
-        },
-        "qActiveExpression": {
-          "default": 0
-        }
-      }
-    },
-    "NxDimensionInfo": {
-      "properties": {
-        "qSortIndicator": {
-          "default": "NX_SORT_INDICATE_NONE",
-          "enumShort": [
-            [ "NX_SORT_INDICATE_NONE", "N" ],
-            [ "NX_SORT_INDICATE_ASC", "A" ],
-            [ "NX_SORT_INDICATE_DESC", "D" ]
+    "Global": {
+      "methods": {
+        "OpenDoc": {
+          "responses": [
+            {
+              "name": "qReturn",
+              "schema": {
+                "$service": "#/x-qlik-services/Doc"
+              }
+            }
           ]
         },
-        "qDimensionType": {
-          "enumShort": [
-            [ "NX_DIMENSION_TYPE_DISCRETE", "D" ],
-            [ "NX_DIMENSION_TYPE_NUMERIC", "N" ],
-            [ "NX_DIMENSION_TYPE_TIME", "T" ]
+        "CreateDocEx": {
+          "responses": [
+            {
+              "name": "qReturn",
+              "schema": {
+                "$service": "#/x-qlik-services/Doc"
+              }
+            }
           ]
         },
-        "qGrouping": {
-          "enumShort": [
-            [ "GRP_NX_NONE", "N" ],
-            [ "GRP_NX_HIEARCHY", "H" ],
-            [ "GRP_NX_COLLECTION", "C" ]
+        "GetActiveDoc": {
+          "responses": [
+            {
+              "name": "qReturn",
+              "schema": {
+                "$service": "#/x-qlik-services/Doc"
+              }
+            }
           ]
-        }
-      }
-    },
-    "NxMeasureInfo": {
-      "properties": {
-        "qSortIndicator": {
-          "default": "NX_SORT_INDICATE_NONE"
-        }
-      }
-    },
-    "ListObjectDef": {
-      "properties": {
-        "qShowAlternatives": {
-          "default": false
-        }
-      }
-    },
-    "NxCurrentSelectionItem": {
-      "properties": {
-        "qSelectionThreshold": {
-          "default": 6
-        }
-      }
-    },
-    "NxTreeDimensionInfo": {
-      "properties": {
-        "qSortIndicator": {
-          "default": "NX_SORT_INDICATE_NONE"
-        }
-      }
-    },
-    "GenericDimensionInfo": {
-      "properties": {
-        "qAndMode": {
-          "default": false
-        }
-      }
-    },
-    "FieldDescription": {
-      "properties": {
-        "qIsSystem": {
-          "default": false
         },
-        "qIsHidden": {
-          "default": false
+        "CreateSessionApp": {
+          "responses": [
+            {
+              "name": "qReturn",
+              "schema": {
+                "$service": "#/x-qlik-services/Doc"
+              }
+            }
+          ]
         },
-        "qIsSemantic": {
-          "default": false
+        "CreateSessionAppFromApp": {
+          "responses": [
+            {
+              "name": "qReturn",
+              "schema": {
+                "$service": "#/x-qlik-services/Doc"
+              }
+            }
+          ]
         },
-        "qDistinctOnly": {
-          "default": false
-        },
-        "qIsLocked": {
-          "default": false
-        },
-        "qAlwaysOneSelected": {
-          "default": false
-        },
-        "qAndMode": {
-          "default": false
-        },
-        "qIsNumeric": {
-          "default": false
-        },
-        "qIsDefinitionOnly": {
-          "default": false
-        }
-      }
-    },
-    "ScriptSyntaxError": {
-      "properties": {
-        "qSecondaryFailure": {
-          "default": false
+        "GetFunctions": {
+          "parameters": [
+            {
+              "name": "qGroup",
+              "default": "FunctionGroup.FUNC_GROUP_ALL"
+            }
+          ]
         }
       }
     }

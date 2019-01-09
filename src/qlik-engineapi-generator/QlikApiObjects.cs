@@ -35,6 +35,9 @@ namespace QlikApiParser
         public List<string> SeeAlso { get; set; }
         public bool Deprecated { get; set; }
 
+        [JsonProperty(PropertyName = "x-qlik-deprecation-description")]
+        public string XQlikDeprecationDescription { get; set; }
+
         public override string ToString()
         {
             return Name;
@@ -139,6 +142,16 @@ namespace QlikApiParser
             return null;
         }
 
+        public string GetEnumType()
+        {
+            if (Items == null)
+                return Type;
+            var enumType = Items["$ref"]?.ToObject<string>() ?? null;
+            if (enumType != null)
+                return enumType?.Split('/')?.LastOrDefault() ?? null;
+            return Type;
+        }
+
         public string GetRealType()
         {
             var result = GetArrayType();
@@ -146,43 +159,33 @@ namespace QlikApiParser
                 result = GetSchemaType();
             return result;
         }
-
-        public List<EngineEnum> GetEnums()
-        {
-            var results = new List<EngineEnum>();
-            if (Items != null)
-            {
-                var enumObj = Items["enum"] ?? null;
-                if (enumObj != null)
-                {
-                    var engineEnum = new EngineEnum() { Name = Name };
-                    Type = Name;
-                    var childen = enumObj.Children();
-                    foreach (var child in childen)
-                    {
-                        var name = child.ToObject<string>();
-                        var shotEnumValues = Items["enumShort"] ?? null;
-                        var shotName = engineEnum.GetShotEnumName(name, shotEnumValues);
-                        engineEnum.Values.Add(new EngineEnumValue() { Name = name, ShotValue = shotName });
-                    }
-                    results.Add(engineEnum);
-                }
-            }
-            return results;
-        }
     }
 
     [JsonObject(ItemNullValueHandling = NullValueHandling.Ignore,
                 NamingStrategyType = typeof(CamelCaseNamingStrategy))]
     public class EngineResponse : EngineAdvancedTypes { }
 
-    public class EngineInterface : EngineBase, IEngineObject
+    public class EngineProperties : EngineBase
+    {
+        [JsonIgnore]
+        public List<EngineProperty> Properties { get; set; } = new List<EngineProperty>();
+
+        public List<EngineProperty> GetDotNetFormatedProperties()
+        {
+            var results = new List<EngineProperty>(Properties);
+            for (int i = 0; i < results.Count; i++)
+            {
+                var firstLetter = results[i].Name.FirstOrDefault().ToString().ToUpperInvariant();
+                results[i].Name = $"{firstLetter}{results[i].Name.Remove(0, 1)}";
+            }
+            return results;
+        }
+    }
+
+    public class EngineInterface : EngineProperties, IEngineObject
     {
         [JsonIgnore]
         public List<EngineMethod> Methods { get; set; } = new List<EngineMethod>();
-
-        [JsonIgnore]
-        public List<EngineProperty> Properties { get; set; } = new List<EngineProperty>();
 
         [JsonIgnore]
         public EngineType EngType { get => EngineType.INTERFACE; }
@@ -190,12 +193,9 @@ namespace QlikApiParser
 
     [JsonObject(ItemNullValueHandling = NullValueHandling.Ignore,
                 NamingStrategyType = typeof(CamelCaseNamingStrategy))]
-    public class EngineClass : EngineBase, IEngineObject
+    public class EngineClass : EngineProperties, IEngineObject
     {
         public string Type { get; set; }
-
-        [JsonIgnore]
-        public List<EngineProperty> Properties { get; set; } = new List<EngineProperty>();
 
         [JsonIgnore]
         public EngineType EngType { get => EngineType.CLASS; }
@@ -218,64 +218,6 @@ namespace QlikApiParser
             }
             return true;
         }
-
-        public string GetShotEnumName(string fullName, JToken shotEnumValues)
-        {
-            if (shotEnumValues == null)
-                return null;
-
-            var values = shotEnumValues.ToObject<JArray>();
-            foreach (var shotenum in shotEnumValues)
-            {
-                var array = shotenum.ToObject<string[]>();
-                if (fullName == array[0])
-                    return array[1];
-            }
-            return null;
-        }
-
-        public void RenameValues()
-        {
-            try
-            {
-                var firstEnum = Values?.FirstOrDefault() ?? null;
-                if (firstEnum == null)
-                    return;
-                var startText = String.Empty;
-                var blocks = firstEnum.Name.Split('_');
-                if (blocks.Length == 1)
-                    return;
-                var tempText = String.Empty;
-                foreach (var block in blocks)
-                {
-                    startText += $"{block}_";
-                    if (!StartWithText(startText))
-                        break;
-                    tempText = startText;
-                }
-
-                if (!String.IsNullOrEmpty(startText))
-                {
-                    var hitNumber = false;
-                    foreach (var item in Values)
-                    {
-                        var testValue = item.Name.Remove(0, tempText.Length);
-                        if (Regex.IsMatch(testValue, "^[0-9]+"))
-                        {
-                            hitNumber = true;
-                            break;
-                        }
-                    }
-                    if (!hitNumber)
-                        foreach (var item in Values)
-                            item.Name = item.Name.Remove(0, tempText.Length);
-                }
-            }
-            catch (Exception ex)
-            {
-                throw new Exception("Rename Values was failed.", ex);
-            }
-        }
     }
 
     [JsonObject(ItemNullValueHandling = NullValueHandling.Ignore,
@@ -284,6 +226,10 @@ namespace QlikApiParser
     {
         public int? Value { get; set; }
         public string ShotValue { get; set; }
+
+        [JsonProperty(PropertyName = "x-qlik-const")]
+        public int? XQlikConst { get; set; }
+        public string Title { get; set; } 
     }
 
     [JsonObject(ItemNullValueHandling = NullValueHandling.Ignore,
@@ -349,11 +295,23 @@ namespace QlikApiParser
             builder.AppendLine(QlikApiUtils.Indented($"/// <{GetName(name, args).Trim()}>", layer));
             foreach (var item in values)
             {
-                var val = item.Replace("\r", "");
+                var val = PreFormatedText(item.Replace("\r", ""));
                 builder.AppendLine(QlikApiUtils.Indented($"/// {val.Trim()}", layer));
             }
             builder.AppendLine(QlikApiUtils.Indented($"/// </{name}>", layer));
             return builder.ToString().TrimEnd();
+        }
+
+        private string PreFormatedText(string value)
+        {
+            value = value.Replace("&lt;", "<");
+            value = value.Replace("&gt;", ">");
+            value = value.Replace("<", "[");
+            value = value.Replace(">", "]");
+            value = Regex.Replace(value, "\\[div class=([^\\]].*?)\\]", "<note type=\"$1\">", RegexOptions.Singleline);
+            value = value.Replace("[/div]", "</note>");
+            value = value.Replace("</note> <note", "</note>\r\n    /// <note");
+            return value;
         }
 
         private string GetFormatedText(string value)
@@ -373,6 +331,7 @@ namespace QlikApiParser
                 var builder = new StringBuilder();
                 if (!String.IsNullOrEmpty(Summary))
                     builder.AppendLine(GetFormatedList(Summary.Split('\n').ToList(), "summary", layer));
+
                 if (Param != null && Param.Count > 0)
                 {
                     foreach (var item in Param)
