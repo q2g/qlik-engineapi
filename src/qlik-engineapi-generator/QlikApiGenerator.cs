@@ -497,7 +497,7 @@ namespace QlikApiParser
             }
         }
 
-        public void SaveToCSharp(QlikApiConfig config, List<IEngineObject> engineObjects, string savePath, string injectPragma = null)
+        public void SaveToCSharp(QlikApiConfig config, List<IEngineObject> engineObjects, string savePath, List<string> injectPragmas = null)
         {
             try
             {
@@ -516,8 +516,11 @@ namespace QlikApiParser
                 fileContent.AppendLine(QlikApiUtils.Indented("using System.Threading;", 1));
                 fileContent.AppendLine(QlikApiUtils.Indented("#endregion", 1));
                 fileContent.AppendLine();
-                if (!string.IsNullOrWhiteSpace(injectPragma))
-                    fileContent.AppendLine(injectPragma);
+
+                if(injectPragmas != null)
+                    foreach (var pragma in injectPragmas)
+                        fileContent.AppendLine(QlikApiUtils.Indented(pragma, 1));
+
                 var lineCounter = 0;
                 var enumObjects = engineObjects.Where(d => d.EngType == EngineType.ENUM).ToList();
                 if (enumObjects.Count > 0)
@@ -554,10 +557,9 @@ namespace QlikApiParser
                         var implInterface = String.Empty;
                         if (Config.BaseObjectInterfaceName != interfaceObject.Name)
                             implInterface = $" : {Config.BaseObjectInterfaceName}";
-
                         fileContent.AppendLine(QlikApiUtils.Indented($"public interface {interfaceObject.Name}{implInterface}", 1));
                         fileContent.AppendLine(QlikApiUtils.Indented("{", 1));
-                        var properties = interfaceObject.GetDotNetFormatedProperties();
+                        var properties = interfaceObject.Properties;
                         foreach (var property in properties)
                         {
                             if (!String.IsNullOrEmpty(property.Description))

@@ -169,17 +169,6 @@ namespace QlikApiParser
     {
         [JsonIgnore]
         public List<EngineProperty> Properties { get; set; } = new List<EngineProperty>();
-
-        public List<EngineProperty> GetDotNetFormatedProperties()
-        {
-            var results = new List<EngineProperty>(Properties);
-            for (int i = 0; i < results.Count; i++)
-            {
-                var firstLetter = results[i].Name.FirstOrDefault().ToString().ToUpperInvariant();
-                results[i].Name = $"{firstLetter}{results[i].Name.Remove(0, 1)}";
-            }
-            return results;
-        }
     }
 
     public class EngineInterface : EngineProperties, IEngineObject
@@ -229,7 +218,7 @@ namespace QlikApiParser
 
         [JsonProperty(PropertyName = "x-qlik-const")]
         public int? XQlikConst { get; set; }
-        public string Title { get; set; } 
+        public string Title { get; set; }
     }
 
     [JsonObject(ItemNullValueHandling = NullValueHandling.Ignore,
