@@ -69,10 +69,17 @@
                 var qlikApiGenerator = new QlikApiGenerator(config);
                 var engineObjects = qlikApiGenerator.ReadJson(origJsonObject);
 
+                //pragmas for compiler warnings
+                var pragmas = new List<string>()
+                {
+                    "#pragma warning disable IDE1006",
+                    "#pragma warning disable CS1591"
+                };
+
                 logger.Info("Write Enums...");
                 var objectResults = engineObjects.Where(o => o.EngType == EngineType.ENUM).ToList();
                 var savePath = Path.Combine(config.OutputFolder, "Enums.cs");
-                qlikApiGenerator.SaveToCSharp(config, objectResults, savePath, "#pragma warning disable CS1591");
+                qlikApiGenerator.SaveToCSharp(config, objectResults, savePath, pragmas);
 
                 logger.Info("Write Interfaces...");
                 objectResults = engineObjects.Where(o => o.EngType == EngineType.INTERFACE).ToList();
