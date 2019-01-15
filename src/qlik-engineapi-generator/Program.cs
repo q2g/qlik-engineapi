@@ -56,7 +56,7 @@
                         jArray = parameters[i].ToObject<JArray>();
                         parameters[i].Replace(origJsonObject.MergeArray(jArray, keyNames));
                     }
-                    keyNames = new List<string>() { "qReturn" };
+                    keyNames = new List<string>() { "qReturn", "qDocId", "qInfo", "qSessionAppId" };
                     var responses = origJsonObject.SelectTokens("$...responses").ToList();
                     for (int i = 0; i < responses.Count; i++)
                     {

@@ -155,6 +155,9 @@ namespace QlikApiParser
                         engineProperty.EnumShot = (propObject as JObject)["enumShort"] as JToken ?? null;
                     }
                     engineProperty.Name = jprop.Name;
+                    if (engineProperty.Type == "boolean" && engineProperty.Default == null)
+                        engineProperty.Default = "false";
+
                     if (engineProperty.Description != null && engineProperty.Description.Contains("The default value is"))
                     {
                         if (!String.IsNullOrEmpty(engineProperty.Default))
@@ -245,7 +248,6 @@ namespace QlikApiParser
                 var serviceType = response.GetServiceType();
                 if (serviceType != null)
                     returnType = $"Task<{serviceType}>";
-
                 if (method?.Responses?.Count > 1 || !Config.UseQlikResponseLogic)
                 {
                     logger.Debug($"The method {method?.Name} has {method?.Responses?.Count} responses.");
@@ -418,6 +420,10 @@ namespace QlikApiParser
                                     para.Type = para.GetRealType();
                                 engineInterface.Methods.Add(engineMethod);
 
+                                var deletePropertys = engineMethod.Responses.Where(i => i.Delete == true).ToList();
+                                for (int i = deletePropertys.Count - 1; i >= 0; i--)
+                                    engineMethod.Responses.Remove(deletePropertys[i]);
+
                                 //T version from original
                                 var jsonMethod = CreateMethodClone(engineMethod);
                                 jsonMethod.UseGeneric = true;
@@ -517,7 +523,7 @@ namespace QlikApiParser
                 fileContent.AppendLine(QlikApiUtils.Indented("#endregion", 1));
                 fileContent.AppendLine();
 
-                if(injectPragmas != null)
+                if (injectPragmas != null)
                     foreach (var pragma in injectPragmas)
                         fileContent.AppendLine(QlikApiUtils.Indented(pragma, 1));
 

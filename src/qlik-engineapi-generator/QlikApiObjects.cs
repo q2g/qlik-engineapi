@@ -105,6 +105,11 @@ namespace QlikApiParser
         public JObject Schema { get; set; }
         public JObject Items { get; set; }
 
+        [JsonProperty(PropertyName = "x-qlik-service")]
+        public string XQlikService { get; set; }
+
+        public bool Delete { get; set; }
+
         private string GetArrayType()
         {
             if (Items == null)
@@ -130,16 +135,9 @@ namespace QlikApiParser
 
         public string GetServiceType()
         {
-            if (Schema == null)
+            if (XQlikService == null)
                 return null;
-
-            var service = Schema["$service"]?.ToObject<string>() ?? null;
-            if (service != null)
-            {
-                service = service?.Split('/')?.LastOrDefault() ?? null;
-                return $"I{service}";
-            }
-            return null;
+            return $"I{XQlikService}";
         }
 
         public string GetEnumType()

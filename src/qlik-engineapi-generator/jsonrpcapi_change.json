@@ -4,36 +4,6 @@
       "ObjectInterface": {
         "type": "object"
       },
-      "NxCell": {
-        "properties": {
-          "qIsEmpty": {
-            "default": false
-          },
-          "qIsTotalCell": {
-            "default": false
-          },
-          "qIsOtherCell": {
-            "default": false
-          }
-        }
-      },
-      "BookmarkFieldItem": {
-        "properties": {
-          "qAndMode": {
-            "default": false
-          },
-          "qOneAndOnlyOne": {
-            "default": false
-          }
-        }
-      },
-      "NxFieldDescription": {
-        "properties": {
-          "qAndMode": {
-            "default": false
-          }
-        }
-      },
       "NxInlineDimensionDef": {
         "properties": {
           "qActiveField": {
@@ -72,13 +42,6 @@
           }
         }
       },
-      "ListObjectDef": {
-        "properties": {
-          "qShowAlternatives": {
-            "default": false
-          }
-        }
-      },
       "NxCurrentSelectionItem": {
         "properties": {
           "qSelectionThreshold": {
@@ -90,51 +53,6 @@
         "properties": {
           "qSortIndicator": {
             "default": "NX_SORT_INDICATE_NONE"
-          }
-        }
-      },
-      "GenericDimensionInfo": {
-        "properties": {
-          "qAndMode": {
-            "default": false
-          }
-        }
-      },
-      "FieldDescription": {
-        "properties": {
-          "qIsSystem": {
-            "default": false
-          },
-          "qIsHidden": {
-            "default": false
-          },
-          "qIsSemantic": {
-            "default": false
-          },
-          "qDistinctOnly": {
-            "default": false
-          },
-          "qIsLocked": {
-            "default": false
-          },
-          "qAlwaysOneSelected": {
-            "default": false
-          },
-          "qAndMode": {
-            "default": false
-          },
-          "qIsNumeric": {
-            "default": false
-          },
-          "qIsDefinitionOnly": {
-            "default": false
-          }
-        }
-      },
-      "ScriptSyntaxError": {
-        "properties": {
-          "qSecondaryFailure": {
-            "default": false
           }
         }
       },
@@ -162,36 +80,6 @@
             {
               "name": "qExportState",
               "default": "NxExportState.EXPORT_ALL"
-            }
-          ]
-        },
-        "GetChild": {
-          "responses": [
-            {
-              "name": "qReturn",
-              "schema": {
-                "$service": "#/service/GenericObject"
-              }
-            }
-          ]
-        },
-        "CreateChild": {
-          "responses": [
-            {
-              "name": "qReturn",
-              "schema": {
-                "$service": "#/service/GenericObject"
-              }
-            }
-          ]
-        },
-        "GetSnapshotObject": {
-          "responses": [
-            {
-              "name": "qReturn",
-              "schema": {
-                "$service": "#/service/GenericBookmark"
-              }
             }
           ]
         },
@@ -227,63 +115,19 @@
             }
           ]
         },
-        "GetField": {
-          "responses": [
-            {
-              "name": "qReturn",
-              "schema": {
-                "$service": "#/x-qlik-services/Field"
-              }
-            }
-          ]
-        },
-        "GetVariable": {
-          "responses": [
-            {
-              "name": "qReturn",
-              "schema": {
-                "$service": "#/x-qlik-services/Variable"
-              }
-            }
-          ]
-        },
-        "CreateSessionObject": {
-          "responses": [
-            {
-              "name": "qReturn",
-              "schema": {
-                "$service": "#/x-qlik-services/GenericObject"
-              }
-            }
-          ]
-        },
         "CreateObject": {
           "responses": [
             {
-              "name": "qReturn",
-              "schema": {
-                "$service": "#/x-qlik-services/GenericObject"
-              }
-            }
-          ]
-        },
-        "GetObject": {
-          "responses": [
-            {
-              "name": "qReturn",
-              "schema": {
-                "$service": "#/x-qlik-services/GenericObject"
-              }
+              "name": "qInfo",
+              "delete": true
             }
           ]
         },
         "CreateDimension": {
           "responses": [
             {
-              "name": "qReturn",
-              "schema": {
-                "$service": "#/x-qlik-services/GenericDimension"
-              }
+              "name": "qInfo",
+              "delete": true
             }
           ]
         },
@@ -300,10 +144,8 @@
         "CreateMeasure": {
           "responses": [
             {
-              "name": "qReturn",
-              "schema": {
-                "$service": "#/x-qlik-services/GenericMeasure"
-              }
+              "name": "qInfo",
+              "delete": true
             }
           ]
         },
@@ -317,63 +159,19 @@
             }
           ]
         },
-        "CreateSessionVariable": {
-          "responses": [
-            {
-              "name": "qReturn",
-              "schema": {
-                "$service": "#/x-qlik-services/GenericVariable"
-              }
-            }
-          ]
-        },
         "CreateVariableEx": {
           "responses": [
             {
-              "name": "qReturn",
-              "schema": {
-                "$service": "#/x-qlik-services/GenericVariable"
-              }
-            }
-          ]
-        },
-        "GetVariableById": {
-          "responses": [
-            {
-              "name": "qReturn",
-              "schema": {
-                "$service": "#/x-qlik-services/GenericVariable"
-              }
-            }
-          ]
-        },
-        "GetVariableByName": {
-          "responses": [
-            {
-              "name": "qReturn",
-              "schema": {
-                "$service": "#/x-qlik-services/GenericVariable"
-              }
+              "name": "qInfo",
+              "delete": true
             }
           ]
         },
         "CreateBookmark": {
           "responses": [
             {
-              "name": "qReturn",
-              "schema": {
-                "$service": "#/x-qlik-services/GenericBookmark"
-              }
-            }
-          ]
-        },
-        "GetBookmark": {
-          "responses": [
-            {
-              "name": "qReturn",
-              "schema": {
-                "$service": "#/x-qlik-services/GenericBookmark"
-              }
+              "name": "qInfo",
+              "delete": true
             }
           ]
         },
@@ -413,53 +211,27 @@
     },
     "Global": {
       "methods": {
-        "OpenDoc": {
-          "responses": [
-            {
-              "name": "qReturn",
-              "schema": {
-                "$service": "#/x-qlik-services/Doc"
-              }
-            }
-          ]
-        },
         "CreateDocEx": {
           "responses": [
             {
-              "name": "qReturn",
-              "schema": {
-                "$service": "#/x-qlik-services/Doc"
-              }
-            }
-          ]
-        },
-        "GetActiveDoc": {
-          "responses": [
-            {
-              "name": "qReturn",
-              "schema": {
-                "$service": "#/x-qlik-services/Doc"
-              }
+              "name": "qDocId",
+              "delete": true
             }
           ]
         },
         "CreateSessionApp": {
           "responses": [
             {
-              "name": "qReturn",
-              "schema": {
-                "$service": "#/x-qlik-services/Doc"
-              }
+              "name": "qSessionAppId",
+              "delete": true
             }
           ]
         },
         "CreateSessionAppFromApp": {
           "responses": [
             {
-              "name": "qReturn",
-              "schema": {
-                "$service": "#/x-qlik-services/Doc"
-              }
+              "name": "qSessionAppId",
+              "delete": true
             }
           ]
         },
