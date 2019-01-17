@@ -47,21 +47,19 @@
                     var changeJsonObject = GetJsonObject(changeJsonFile);
                     origJsonObject.Merge(changeJsonObject);
 
-                    var keyNames = new List<string>() {"qExportState", "qMatchingFieldMode", "qGroup", "qPath", "qRanges", "qOrMode",
-                                                       "qDeselectOnlyOneSelected", "qNullSize", "qConditions", "qParams", "qListDef" };
                     var parameters = origJsonObject.SelectTokens("$...parameters").ToList();
                     var jArray = new JArray();
                     for (int i = 0; i < parameters.Count; i++)
                     {
                         jArray = parameters[i].ToObject<JArray>();
-                        parameters[i].Replace(origJsonObject.MergeArray(jArray, keyNames));
+                        parameters[i].Replace(origJsonObject.MergeArray(jArray));
                     }
-                    keyNames = new List<string>() { "qReturn", "qDocId", "qInfo", "qSessionAppId" };
+
                     var responses = origJsonObject.SelectTokens("$...responses").ToList();
                     for (int i = 0; i < responses.Count; i++)
                     {
                         jArray = responses[i].ToObject<JArray>();
-                        responses[i].Replace(origJsonObject.MergeArray(jArray, keyNames));
+                        responses[i].Replace(origJsonObject.MergeArray(jArray));
                     }
                 }
 

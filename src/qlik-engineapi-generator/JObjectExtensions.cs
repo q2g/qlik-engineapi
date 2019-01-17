@@ -17,12 +17,14 @@ namespace Newtonsoft.Helper
         #endregion
 
         #region Public Methods
-        public static JArray MergeArray(this JObject @this, JArray array, List<string> keyNames)
+        public static JArray MergeArray(this JObject @this, JArray array)
         {
             try
             {
-                foreach (var keyName in keyNames)
+                var tokens = array.SelectTokens($"$..name").ToList();
+                foreach (var tokenItem in tokens)
                 {
+                    var keyName = tokenItem.ToObject<string>();
                     var foundTokens = array.SelectTokens($"$..name")?.Where(t => t.Value<string>() == keyName)?.ToList();
                     if (foundTokens.Count > 1)
                     {

@@ -155,8 +155,27 @@ namespace QlikApiParser
                         engineProperty.EnumShot = (propObject as JObject)["enumShort"] as JToken ?? null;
                     }
                     engineProperty.Name = jprop.Name;
-                    if (engineProperty.Type == "boolean" && engineProperty.Default == null)
-                        engineProperty.Default = "false";
+
+                    if (engineProperty.Default == null)
+                    {
+                        switch (engineProperty.Type)
+                        {
+                            case "boolean":
+                                engineProperty.Default = "false";
+                                break;
+                            case "integer":
+                                engineProperty.Default = "0";
+                                break;
+                            case "double":
+                                engineProperty.Default = "0";
+                                break;
+                            case "object":
+                                engineProperty.Default = "null";
+                                break;
+                            default:
+                                break;
+                        }
+                    }
 
                     if (engineProperty.Description != null && engineProperty.Description.Contains("The default value is"))
                     {
@@ -423,6 +442,14 @@ namespace QlikApiParser
                                 var deletePropertys = engineMethod.Responses.Where(i => i.Delete == true).ToList();
                                 for (int i = deletePropertys.Count - 1; i >= 0; i--)
                                     engineMethod.Responses.Remove(deletePropertys[i]);
+
+                                //Check reponse for the presence of property "x-qlik-service"
+                                foreach (var response in engineMethod.Responses)
+                                {
+                                    var objectInterface = response?.Schema?.ToString()?.EndsWith("/ObjectInterface") ?? false;
+                                    if (objectInterface && response.XQlikService == null)
+                                        logger.Warn($"The interface {engineInterface.Name} has a method {methodProp.Name} which has no x-qlik-service as the return value.");
+                                }
 
                                 //T version from original
                                 var jsonMethod = CreateMethodClone(engineMethod);

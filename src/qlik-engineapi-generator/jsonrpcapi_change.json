@@ -4,30 +4,6 @@
       "ObjectInterface": {
         "type": "object"
       },
-      "NxInlineDimensionDef": {
-        "properties": {
-          "qActiveField": {
-            "default": 0
-          }
-        }
-      },
-      "NxMeasure": {
-        "properties": {
-          "qSortBy": {
-            "default": "null"
-          }
-        }
-      },
-      "NxInlineMeasureDef": {
-        "properties": {
-          "qAggrFunc": {
-            "default": "null"
-          },
-          "qActiveExpression": {
-            "default": 0
-          }
-        }
-      },
       "NxDimensionInfo": {
         "properties": {
           "qSortIndicator": {
@@ -131,31 +107,11 @@
             }
           ]
         },
-        "GetDimension": {
-          "responses": [
-            {
-              "name": "qReturn",
-              "schema": {
-                "$service": "#/x-qlik-services/GenericDimension"
-              }
-            }
-          ]
-        },
         "CreateMeasure": {
           "responses": [
             {
               "name": "qInfo",
               "delete": true
-            }
-          ]
-        },
-        "GetMeasure": {
-          "responses": [
-            {
-              "name": "qReturn",
-              "schema": {
-                "$service": "#/x-qlik-services/GenericMeasure"
-              }
             }
           ]
         },
