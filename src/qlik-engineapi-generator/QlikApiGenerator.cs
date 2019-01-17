@@ -433,10 +433,16 @@ namespace QlikApiParser
                                 logger.Debug($"Method name: {methodProp.Name}");
                                 var engineMethod = method.First.ToObject<EngineMethod>();
                                 engineMethod.Name = methodProp.Name;
+
                                 if (method.First is JObject seeAlsoObject)
                                     engineMethod.SeeAlso = GetValueFromProperty<List<string>>(seeAlsoObject, "x-qlik-see-also");
                                 foreach (var para in engineMethod.Parameters)
+                                {
+                                    if (para.Default != null && para.Type == "string" && para.Items != null)
+                                        para.Default = $"{para.GetEnumType()}.{para.Default}";
+
                                     para.Type = para.GetRealType();
+                                }
                                 engineInterface.Methods.Add(engineMethod);
 
                                 var deletePropertys = engineMethod.Responses.Where(i => i.Delete == true).ToList();

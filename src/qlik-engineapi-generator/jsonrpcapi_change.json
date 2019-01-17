@@ -55,7 +55,7 @@
           "parameters": [
             {
               "name": "qExportState",
-              "default": "NxExportState.EXPORT_ALL"
+              "default": "EXPORT_ALL"
             }
           ]
         },
@@ -87,7 +87,7 @@
           "parameters": [
             {
               "name": "qMatchingFieldMode",
-              "default": "NxMatchingFieldMode.MATCHINGFIELDMODE_MATCH_ALL"
+              "default": "MATCHINGFIELDMODE_MATCH_ALL"
             }
           ]
         },
@@ -195,7 +195,7 @@
           "parameters": [
             {
               "name": "qGroup",
-              "default": "FunctionGroup.FUNC_GROUP_ALL"
+              "default": "FUNC_GROUP_ALL"
             }
           ]
         }
