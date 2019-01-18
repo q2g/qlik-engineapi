@@ -155,6 +155,28 @@ namespace QlikApiParser
                         engineProperty.EnumShot = (propObject as JObject)["enumShort"] as JToken ?? null;
                     }
                     engineProperty.Name = jprop.Name;
+
+                    if (engineProperty.Default == null)
+                    {
+                        switch (engineProperty.Type)
+                        {
+                            case "boolean":
+                                engineProperty.Default = "false";
+                                break;
+                            case "integer":
+                                engineProperty.Default = "0";
+                                break;
+                            case "double":
+                                engineProperty.Default = "0";
+                                break;
+                            case "object":
+                                engineProperty.Default = "null";
+                                break;
+                            default:
+                                break;
+                        }
+                    }
+
                     if (engineProperty.Description != null && engineProperty.Description.Contains("The default value is"))
                     {
                         if (!String.IsNullOrEmpty(engineProperty.Default))
@@ -245,7 +267,6 @@ namespace QlikApiParser
                 var serviceType = response.GetServiceType();
                 if (serviceType != null)
                     returnType = $"Task<{serviceType}>";
-
                 if (method?.Responses?.Count > 1 || !Config.UseQlikResponseLogic)
                 {
                     logger.Debug($"The method {method?.Name} has {method?.Responses?.Count} responses.");
@@ -412,11 +433,29 @@ namespace QlikApiParser
                                 logger.Debug($"Method name: {methodProp.Name}");
                                 var engineMethod = method.First.ToObject<EngineMethod>();
                                 engineMethod.Name = methodProp.Name;
+
                                 if (method.First is JObject seeAlsoObject)
                                     engineMethod.SeeAlso = GetValueFromProperty<List<string>>(seeAlsoObject, "x-qlik-see-also");
                                 foreach (var para in engineMethod.Parameters)
+                                {
+                                    if (para.Default != null && para.Type == "string" && para.Items != null)
+                                        para.Default = $"{para.GetEnumType()}.{para.Default}";
+
                                     para.Type = para.GetRealType();
+                                }
                                 engineInterface.Methods.Add(engineMethod);
+
+                                var deletePropertys = engineMethod.Responses.Where(i => i.Delete == true).ToList();
+                                for (int i = deletePropertys.Count - 1; i >= 0; i--)
+                                    engineMethod.Responses.Remove(deletePropertys[i]);
+
+                                //Check reponse for the presence of property "x-qlik-service"
+                                foreach (var response in engineMethod.Responses)
+                                {
+                                    var objectInterface = response?.Schema?.ToString()?.EndsWith("/ObjectInterface") ?? false;
+                                    if (objectInterface && response.XQlikService == null)
+                                        logger.Warn($"The interface {engineInterface.Name} has a method {methodProp.Name} which has no x-qlik-service as the return value.");
+                                }
 
                                 //T version from original
                                 var jsonMethod = CreateMethodClone(engineMethod);
@@ -517,7 +556,7 @@ namespace QlikApiParser
                 fileContent.AppendLine(QlikApiUtils.Indented("#endregion", 1));
                 fileContent.AppendLine();
 
-                if(injectPragmas != null)
+                if (injectPragmas != null)
                     foreach (var pragma in injectPragmas)
                         fileContent.AppendLine(QlikApiUtils.Indented(pragma, 1));
 
