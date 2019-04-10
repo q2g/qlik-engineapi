@@ -67,8 +67,10 @@
                 logger.Info("Start parsing...");
                 var qlikApiGenerator = new QlikApiGenerator(config);
                 var engineObjects = qlikApiGenerator.ReadJson(origJsonObject);
-
                 WriteCSharp(engineObjects, config, qlikApiGenerator);
+
+                qlikApiGenerator = new QlikApiGenerator(config);
+                engineObjects = qlikApiGenerator.ReadJson(origJsonObject);
                 WriteTypeScript(engineObjects, config, qlikApiGenerator);
 
                 Environment.ExitCode = 0;
