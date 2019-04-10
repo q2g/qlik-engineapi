@@ -79,7 +79,7 @@ namespace QlikApiParser
                     {
                         Name = response.Name,
                         Description = response.Description,
-                        Type = QlikApiUtils.GetDotNetType(response.GetRealType()),
+                        Type = QlikApiUtils.GetDotNetType(response.GetRealType(ScriptLanguage.CSharp)),
                         Required = response.Required,
                         Format = response.Format,
                     };
@@ -110,17 +110,25 @@ namespace QlikApiParser
 
         public bool Delete { get; set; }
 
-        private string GetArrayType()
+        private string GetArrayType(ScriptLanguage language)
         {
             if (Items == null)
                 return Type;
             var itemType = Items["type"]?.ToObject<string>() ?? null;
             if (itemType == null)
                 return Type;
-            return $"List<{QlikApiUtils.GetDotNetType(itemType)}>";
+            switch (language)
+            {
+                case ScriptLanguage.CSharp:
+                    return $"List<{QlikApiUtils.GetDotNetType(itemType)}>";
+                case ScriptLanguage.TypeScript:
+                    return $"Array<{QlikApiUtils.GetTypeScriptType(itemType)}>";
+                default:
+                    throw new Exception($"Unknown script language {language.ToString()}");
+            }
         }
 
-        private string GetSchemaType()
+        private string GetSchemaType(ScriptLanguage language)
         {
             if (Schema == null)
                 return Type;
@@ -129,7 +137,17 @@ namespace QlikApiParser
                 return Type;
             result = result?.Split('/')?.LastOrDefault() ?? null;
             if (Type == "array")
-                return $"List<{QlikApiUtils.GetDotNetType(result)}>";
+            {
+                switch (language)
+                {
+                    case ScriptLanguage.CSharp:
+                        return $"List<{QlikApiUtils.GetDotNetType(result)}>";
+                    case ScriptLanguage.TypeScript:
+                        return $"Array<{QlikApiUtils.GetTypeScriptType(result)}>";
+                    default:
+                        throw new Exception($"Unknown script language {language.ToString()}");
+                }
+            }
             return result;
         }
 
@@ -150,11 +168,11 @@ namespace QlikApiParser
             return Type;
         }
 
-        public string GetRealType()
+        public string GetRealType(ScriptLanguage language)
         {
-            var result = GetArrayType();
+            var result = GetArrayType(language);
             if (result == Type)
-                result = GetSchemaType();
+                result = GetSchemaType(language);
             return result;
         }
     }
@@ -240,6 +258,17 @@ namespace QlikApiParser
             return result;
         }
 
+        public string GetRefTypeScript()
+        {
+            var result = Ref?.Split('/')?.LastOrDefault() ?? null;
+            if (result == "JsonObject")
+                return "JObject";
+            if (Ref != null && Ref.StartsWith("#") && !IsEnumType)
+                return $"I{result}";
+            else
+                return result;
+        }
+
         public List<EngineEnum> GetConvertedEnums()
         {
             var results = new List<EngineEnum>();
@@ -262,17 +291,22 @@ namespace QlikApiParser
         public List<EngineParameter> Param { get; set; } = new List<EngineParameter>();
         public string Return { get; set; }
         private bool UseDescription { get; set; }
+        private ScriptLanguage language = ScriptLanguage.CSharp;
 
-        public DescritpionBuilder(bool useDescription)
+        public DescritpionBuilder(bool useDescription, ScriptLanguage lang)
         {
+            language = lang;
             UseDescription = useDescription;
         }
 
         private string GetName(string name, Tuple<string, string> args = null)
         {
             var builder = new StringBuilder();
-            if (args != null)
-                builder.AppendLine($" {args.Item1}=\"{args.Item2}\"");
+            if (language == ScriptLanguage.CSharp)
+            {
+                if (args != null)
+                    builder.AppendLine($" {args.Item1}=\"{args.Item2}\"");
+            }
             return $"{name}{builder.ToString().TrimEnd()}";
         }
 
@@ -289,6 +323,30 @@ namespace QlikApiParser
             return builder.ToString().TrimEnd();
         }
 
+        private string GetFormatedTypscriptList(List<string> values, string name, int layer, Tuple<string, string> args = null)
+        {
+            var builder = new StringBuilder();
+            var def = true;
+            if (!String.IsNullOrEmpty(name))
+            {
+                builder.Append(QlikApiUtils.Indented($" * {GetName(name, args).Trim()}", layer));
+                def = false;
+            }
+
+            foreach (var item in values)
+            {
+                var val = PreFormatedText(item.Replace("\r", ""));
+                if (def)
+                    builder.AppendLine(QlikApiUtils.Indented($" * {val.Trim()}", layer, def));
+                else
+                {
+                    builder.AppendLine(QlikApiUtils.Indented($" {val.Trim()}", layer, def));
+                    def = true;
+                }
+            }
+            return builder.ToString().TrimEnd();
+        }
+
         private string PreFormatedText(string value)
         {
             value = value.Replace("&lt;", "<");
@@ -297,7 +355,12 @@ namespace QlikApiParser
             value = value.Replace(">", "]");
             value = Regex.Replace(value, "\\[div class=([^\\]].*?)\\]", "<note type=\"$1\">", RegexOptions.Singleline);
             value = value.Replace("[/div]", "</note>");
-            value = value.Replace("</note> <note", "</note>\r\n    /// <note");
+            if (language == ScriptLanguage.CSharp)
+                value = value.Replace("</note> <note", "</note>\r\n    /// <note");
+            else if (language == ScriptLanguage.TypeScript)
+                value = value.Replace("</note> <note", "</note>\r\n    * <note");
+            else
+                throw new Exception($"Unknown script language {language.ToString()}");
             return value;
         }
 
@@ -308,7 +371,7 @@ namespace QlikApiParser
             return value;
         }
 
-        public string Generate(int layer)
+        public string Generate(int layer, string deprecated = null)
         {
             try
             {
@@ -316,27 +379,61 @@ namespace QlikApiParser
                     return null;
 
                 var builder = new StringBuilder();
-                if (!String.IsNullOrEmpty(Summary))
-                    builder.AppendLine(GetFormatedList(Summary.Split('\n').ToList(), "summary", layer));
 
-                if (Param != null && Param.Count > 0)
+                if (language == ScriptLanguage.CSharp)
                 {
-                    foreach (var item in Param)
+                    if (!String.IsNullOrEmpty(Summary))
+                        builder.AppendLine(GetFormatedList(Summary.Split('\n').ToList(), "summary", layer));
+
+                    if (Param != null && Param.Count > 0)
                     {
-                        if (!String.IsNullOrEmpty(item.Description))
+                        foreach (var item in Param)
                         {
-                            var values = item.Description.Split('\n').ToList();
-                            var parmText = GetFormatedList(values, "param", layer, new Tuple<string, string>("name", item.Name));
-                            builder.AppendLine(parmText);
+                            if (!String.IsNullOrEmpty(item.Description))
+                            {
+                                var values = item.Description.Split('\n').ToList();
+                                var parmText = GetFormatedList(values, "param", layer, new Tuple<string, string>("name", item.Name));
+                                builder.AppendLine(parmText);
+                            }
                         }
                     }
+                    if (!String.IsNullOrEmpty(Return))
+                        builder.AppendLine(GetFormatedList(Return.Split('\n').ToList(), "return", layer));
+                    if (SeeAlso != null && SeeAlso.Count > 0)
+                    {
+                        builder.AppendLine(GetFormatedList(SeeAlso, "seealso", layer));
+                    }
                 }
-                if (!String.IsNullOrEmpty(Return))
-                    builder.AppendLine(GetFormatedList(Return.Split('\n').ToList(), "return", layer));
-                if (SeeAlso != null && SeeAlso.Count > 0)
+                else if (language == ScriptLanguage.TypeScript)
                 {
-                    builder.AppendLine(GetFormatedList(SeeAlso, "seealso", layer));
+                    builder.AppendLine(QlikApiUtils.Indented($"/**", layer));
+                    if (!String.IsNullOrEmpty(Summary))
+                        builder.AppendLine(GetFormatedTypscriptList(Summary.Split('\n').ToList(), "", layer));
+
+                    if (Param != null && Param.Count > 0)
+                    {
+                        foreach (var item in Param)
+                        {
+                            if (!String.IsNullOrEmpty(item.Description))
+                            {
+                                var values = item.Description.Split('\n').ToList();
+                                var parmText = GetFormatedTypscriptList(values, "@param", layer, new Tuple<string, string>("name", item.Name));
+                                builder.AppendLine(parmText);
+                            }
+                        }
+                    }
+
+                    if (!String.IsNullOrEmpty(Return))
+                        builder.AppendLine(GetFormatedTypscriptList(Return.Split('\n').ToList(), "@return", layer));
+
+                    if (!String.IsNullOrEmpty(deprecated))
+                        builder.AppendLine(QlikApiUtils.Indented($" * @deprecated{ deprecated }", layer));
+
+                    builder.AppendLine(QlikApiUtils.Indented($" */", layer));
                 }
+                else
+                    throw new Exception($"Unknown script language {language.ToString()}");
+
                 return GetFormatedText(builder.ToString().TrimEnd());
             }
             catch (Exception ex)

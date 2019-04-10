@@ -9,15 +9,18 @@ namespace QlikApiParser
     using Newtonsoft.Json.Serialization;
     using System.ComponentModel;
     using System.Text;
+    using System.Text.RegularExpressions;
     #endregion
 
     public class QlikApiUtils
     {
-        public static string Indented(string value, int layer)
+        public static string Indented(string value, int layer, bool useDef = true)
         {
             if (layer <= 0)
                 return value;
             var def = "    ";
+            if (!useDef)
+                def = String.Empty;
             var indent = String.Empty;
             for (int i = 0; i < layer; i++)
                 indent += def;
@@ -37,7 +40,7 @@ namespace QlikApiParser
                     return "double";
                 case "object":
                     return "JObject";
-                case "JsonObject":
+                case "jsonobject":
                     return "JObject";
                 case "nan":
                     return "null";
@@ -49,11 +52,49 @@ namespace QlikApiParser
             }
         }
 
+        public static string GetTypeScriptType(string type)
+        {
+            switch (type?.ToLowerInvariant())
+            {
+                case "integer":
+                case "int8":
+                case "int":
+                    return "number";
+                case "bool":
+                    return "boolean";
+                case "boolean":
+                    return "boolean";
+                case "number":
+                    return "number";
+                case "object":
+                    return "object";
+                case "jsonobject":
+                    return "any";
+                case "jobject":
+                    return "any";
+                case "ijobject":
+                    return "any";
+                case "nan":
+                    return "null";
+                case "-1e+300":
+                    return "null";
+                case "string":
+                    return "string";
+                default:
+                    var match = Regex.Match(type, "List<([^\\>]+)\\>");
+                    if (match.Success)
+                    {
+                        type = $"Array<{GetTypeScriptType(match.Groups.ElementAt(1).Value)}>";
+                    }
+                    return type;
+            }
+        }
+
         public static string GetDefaultValue(string type, string defaultValue)
         {
-            if(!String.IsNullOrEmpty(defaultValue))
-              return defaultValue;
-            
+            if (!String.IsNullOrEmpty(defaultValue))
+                return defaultValue;
+
             switch (type?.ToLowerInvariant())
             {
                 case "integer":

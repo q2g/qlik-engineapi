@@ -40,9 +40,9 @@
     </Otherwise>
   </Choose>
 
-  <Target Name="CheckFileAvailable" BeforeTargets="BeforeBuild">
+  <!-->Target Name="CheckFileAvailable" BeforeTargets="BeforeBuild">
     <Error Text="Codefiles have to be generated" Condition="!Exists('$(ProjectDir)\Interfaces.cs')" />    
-  </Target>
+  </Target-->
 
   <Target Name="PublishToNugetWithAPIKey" AfterTargets="GenerateNuspec">
     <ReadLinesFromFile File="$(SolutionDir)\..\..\nugetapikey.txt">

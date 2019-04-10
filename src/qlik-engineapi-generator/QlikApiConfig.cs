@@ -27,6 +27,8 @@ namespace QlikApiParser
         [JsonProperty(Required = Required.Always)]
         public string OutputFolder { get; set; }
         [JsonProperty(Required = Required.Always)]
+        public string TypeScriptFolder { get; set; }
+        [JsonProperty(Required = Required.Always)]
         public string NamespaceName { get; set; }
         [JsonProperty]
         public bool UseQlikResponseLogic { get; set; } = true;
