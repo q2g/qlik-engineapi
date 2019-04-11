@@ -664,7 +664,7 @@ namespace QlikApiParser
             }
         }
 
-        public void SaveToCSharp(QlikApiConfig config, List<IEngineObject> engineObjects, string savePath, List<string> injectPragmas = null, ScriptLanguage language = ScriptLanguage.CSharp)
+        public void SaveTo(QlikApiConfig config, List<IEngineObject> engineObjects, string savePath, List<string> injectPragmas = null, ScriptLanguage language = ScriptLanguage.CSharp)
         {
             try
             {

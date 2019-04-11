@@ -116,19 +116,19 @@
             logger.Info("Write Enums...");
             var objectResults = engineObjects.Where(o => o.EngType == EngineType.ENUM).ToList();
             var savePath = Path.Combine(config.OutputFolder, "Enums.cs");
-            qlikApiGenerator.SaveToCSharp(config, objectResults, savePath, pragmas);
+            qlikApiGenerator.SaveTo(config, objectResults, savePath, pragmas);
 
             logger.Info("Write Interfaces...");
             objectResults = engineObjects.Where(o => o.EngType == EngineType.INTERFACE).ToList();
             savePath = Path.Combine(config.OutputFolder, "Interfaces.cs");
-            qlikApiGenerator.SaveToCSharp(config, objectResults, savePath);
+            qlikApiGenerator.SaveTo(config, objectResults, savePath);
 
             logger.Info("Write Classes...");
             objectResults = engineObjects.Where(o => o.EngType == EngineType.CLASS).ToList();
             foreach (var classResult in objectResults)
             {
                 savePath = Path.Combine(config.OutputFolder, $"{classResult.Name}.cs");
-                qlikApiGenerator.SaveToCSharp(config, new List<IEngineObject>() { classResult }, savePath);
+                qlikApiGenerator.SaveTo(config, new List<IEngineObject>() { classResult }, savePath);
             }
         }
 
@@ -137,17 +137,17 @@
             logger.Info("Write Enums...");
             var objectResults = engineObjects.Where(o => o.EngType == EngineType.ENUM).ToList();
             var enumFile = Path.Combine(config.TypeScriptFolder, "Enums.d.ts");
-            qlikApiGenerator.SaveToCSharp(config, objectResults, enumFile, null, ScriptLanguage.TypeScript);
+            qlikApiGenerator.SaveTo(config, objectResults, enumFile, null, ScriptLanguage.TypeScript);
 
             logger.Info("Write Interfaces...");
             objectResults = engineObjects.Where(o => o.EngType == EngineType.INTERFACE).ToList();
             var interfaceFile = Path.Combine(config.TypeScriptFolder, "Interfaces.d.ts");
-            qlikApiGenerator.SaveToCSharp(config, objectResults, interfaceFile, null, ScriptLanguage.TypeScript);
+            qlikApiGenerator.SaveTo(config, objectResults, interfaceFile, null, ScriptLanguage.TypeScript);
 
             logger.Info("Write Classes...");
             objectResults = engineObjects.Where(o => o.EngType == EngineType.CLASS).ToList();
             var classFile = Path.Combine(config.TypeScriptFolder, $"Class.d.ts");
-            qlikApiGenerator.SaveToCSharp(config, objectResults, classFile, null, ScriptLanguage.TypeScript);
+            qlikApiGenerator.SaveTo(config, objectResults, classFile, null, ScriptLanguage.TypeScript);
 
             logger.Info("Write Index file...");
             var indexBuilder = new StringBuilder();
