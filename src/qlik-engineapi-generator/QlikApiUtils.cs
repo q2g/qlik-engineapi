@@ -67,7 +67,7 @@ namespace QlikApiParser
                 case "number":
                     return "number";
                 case "object":
-                    return "object";
+                    return "any";
                 case "jsonobject":
                     return "any";
                 case "jobject":
@@ -75,9 +75,9 @@ namespace QlikApiParser
                 case "ijobject":
                     return "any";
                 case "nan":
-                    return "null";
+                    return "NaN";
                 case "-1e+300":
-                    return "null";
+                    return "NaN";
                 case "string":
                     return "string";
                 default:
