@@ -358,13 +358,7 @@ namespace QlikApiParser
             if (language == ScriptLanguage.CSharp)
                 value = value.Replace("</note> <note", "</note>\r\n    /// <note");
             else if (language == ScriptLanguage.TypeScript)
-            {
-                if(value.Contains("The type of an object cannot be updated."))
-                {
-                    var kk = 0;
-                }
                 value = value.Replace("</note> <note", "</note>\r\n         * <note");
-            }
             else
                 throw new Exception($"Unknown script language {language.ToString()}");
             return value;
