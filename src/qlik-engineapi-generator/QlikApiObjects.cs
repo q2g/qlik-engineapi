@@ -212,17 +212,6 @@ namespace QlikApiParser
     {
         public EngineType EngType { get => EngineType.ENUM; }
         public List<EngineEnumValue> Values { get; set; } = new List<EngineEnumValue>();
-
-        private bool StartWithText(string value)
-        {
-            var items = Values.Skip(1);
-            foreach (var item in items)
-            {
-                if (!item.Name.StartsWith(value))
-                    return false;
-            }
-            return true;
-        }
     }
 
     [JsonObject(ItemNullValueHandling = NullValueHandling.Ignore,
@@ -291,7 +280,7 @@ namespace QlikApiParser
         public List<EngineParameter> Param { get; set; } = new List<EngineParameter>();
         public string Return { get; set; }
         private bool UseDescription { get; set; }
-        private ScriptLanguage language = ScriptLanguage.CSharp;
+        private readonly ScriptLanguage language = ScriptLanguage.CSharp;
 
         public DescritpionBuilder(bool useDescription, ScriptLanguage lang)
         {
@@ -317,7 +306,8 @@ namespace QlikApiParser
             foreach (var item in values)
             {
                 var val = PreFormatedText(item.Replace("\r", ""));
-                builder.AppendLine(QlikApiUtils.Indented($"/// {val.Trim()}", layer));
+                foreach(var line in val)
+                    builder.AppendLine(QlikApiUtils.Indented($"/// {line.Trim()}", layer));
             }
             builder.AppendLine(QlikApiUtils.Indented($"/// </{name}>", layer));
             return builder.ToString().TrimEnd();
@@ -328,26 +318,35 @@ namespace QlikApiParser
             var builder = new StringBuilder();
             var def = true;
             if (!String.IsNullOrEmpty(name))
-            {
-                builder.Append(QlikApiUtils.Indented($" * {GetName(name, args).Trim()}", layer));
+            {               
+                builder.Append(QlikApiUtils.Indented($" * {GetName(name, args).Trim()}", layer).TrimEnd());
                 def = false;
             }
-
+            
             foreach (var item in values)
             {
-                var val = PreFormatedText(item.Replace("\r", ""));
-                if (def)
-                    builder.AppendLine(QlikApiUtils.Indented($" * {val.Trim()}", layer, def));
-                else
+                var newItem = item;
+                if (name == "@return" && item.StartsWith("{"))
                 {
-                    builder.AppendLine(QlikApiUtils.Indented($" {val.Trim()}", layer, def));
-                    def = true;
+                    newItem = "JSON " + item;
+                }
+                                   
+                var vals = PreFormatedText(newItem.Replace("\r", "").Replace((char)160,' ').Replace("  "," "));                
+                foreach (var shortLine in vals)
+                {
+                    if (def)
+                        builder.AppendLine(QlikApiUtils.Indented($" * {shortLine.Trim()}", layer, def).TrimEnd());
+                    else
+                    {
+                        builder.AppendLine(QlikApiUtils.Indented($" {shortLine.Trim()}", layer, def).TrimEnd());
+                        def = true;
+                    }
                 }
             }
             return builder.ToString().TrimEnd();
         }
 
-        private string PreFormatedText(string value)
+        private List<string> PreFormatedText(string value)
         {
             value = value.Replace("&lt;", "<");
             value = value.Replace("&gt;", ">");
@@ -356,12 +355,18 @@ namespace QlikApiParser
             value = Regex.Replace(value, "\\[div class=([^\\]].*?)\\]", "<note type=\"$1\">", RegexOptions.Singleline);
             value = value.Replace("[/div]", "</note>");
             if (language == ScriptLanguage.CSharp)
-                value = value.Replace("</note> <note", "</note>\r\n    /// <note");
+                value = value.Replace("</note> <note", "</note>\r\n<note");
             else if (language == ScriptLanguage.TypeScript)
-                value = value.Replace("</note> <note", "</note>\r\n         * <note");
+                value = value.Replace("</note> <note", "</note>\r\n<note");
             else
                 throw new Exception($"Unknown script language {language.ToString()}");
-            return value;
+
+            if (value.Length > 180)
+            {
+                value = value.Replace(". ", ".\r\n");
+                value = value.Replace("[br]", "[br]\r\n");
+            }
+            return value.Split("\r\n").ToList();
         }
 
         private string GetFormatedText(string value)
@@ -421,7 +426,7 @@ namespace QlikApiParser
                         {
                             if (!String.IsNullOrEmpty(item.Description))
                             {
-                                var values = item.Description.Split('\n').ToList();
+                                var values = item.Description.Replace("  "," ").Split('\n').ToList();
                                 var parmText = GetFormatedTypscriptList(values, "@param", layer, new Tuple<string, string>("name", item.Name));
                                 builder.AppendLine(parmText);
                             }

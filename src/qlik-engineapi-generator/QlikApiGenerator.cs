@@ -44,7 +44,7 @@ namespace QlikApiParser
         private T GetValueFromProperty<T>(JObject jObject, string name)
         {
             if (jObject == null)
-                return default(T);
+                return default;
 
             var children = jObject.Children();
             foreach (var child in children)
@@ -54,7 +54,7 @@ namespace QlikApiParser
                     return jProperty.First.ToObject<T>();
             }
 
-            return default(T);
+            return default;
         }
 
         private string GetParentName(JProperty token)
@@ -751,7 +751,7 @@ namespace QlikApiParser
                     {
                         lineCounter++;
                         var enumResult = GetFormatedEnumBlock(enumValue, scriptLang);
-                        fileContent.AppendLine(enumResult);
+                        fileContent.AppendLine(QlikApiUtils.Indented(enumResult,1));
                         if (lineCounter < enumObjects.Count)
                             fileContent.AppendLine();
                     }
@@ -896,8 +896,7 @@ namespace QlikApiParser
                 }
                 var classObjects = engineObjects.Where(d => d.EngType == EngineType.CLASS).ToList();
                 if (classObjects.Count > 0)
-                {
-
+                {                   
                     fileContent.AppendLine(QlikApiUtils.Indented(GetStartRegion("Classes", scriptLang), 1));
                     logger.Debug($"Write Classes {classObjects.Count}");
                     lineCounter = 0;

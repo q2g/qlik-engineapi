@@ -156,17 +156,16 @@
             indexBuilder.AppendLine("// Definitions by: Konrad Mattheis <https://github.com/konne>");            
             indexBuilder.AppendLine("// Definitions: https://github.com/DefinitelyTyped/DefinitelyTyped");
             indexBuilder.AppendLine();
-            indexBuilder.Append($"declare namespace {config.NamespaceName} {{");
-            indexBuilder.AppendLine();
+            indexBuilder.Append($"declare namespace {config.NamespaceName.Replace("Qlik.","")} {{");            
             var content = File.ReadAllText(enumFile);
             indexBuilder.AppendLine($"\n    {content}");
             content = File.ReadAllText(interfaceFile);
             indexBuilder.AppendLine($"\n    {content}");
             content = File.ReadAllText(classFile);
             indexBuilder.AppendLine($"\n    {content}");
-            indexBuilder.AppendLine("}");
+            indexBuilder.AppendLine("}");            
 
-            File.WriteAllText(Path.Combine(config.TypeScriptFolder, "index.d.ts"), indexBuilder.ToString().TrimEnd());
+            File.WriteAllText(Path.Combine(config.TypeScriptFolder, "index.d.ts"), indexBuilder.ToString());
 
             File.Delete(enumFile);
             File.Delete(interfaceFile);
