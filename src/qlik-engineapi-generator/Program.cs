@@ -167,7 +167,7 @@
             indexBuilder.AppendLine($"\n    {content}");
             indexBuilder.AppendLine("}");
 
-            File.WriteAllText(Path.Combine(config.TypeScriptFolder, "index.d.ts"), indexBuilder.ToString());
+            File.WriteAllText(Path.Combine(config.TypeScriptFolder, "index.d.ts"), indexBuilder.ToString().TrimEnd());
 
             File.Delete(enumFile);
             File.Delete(interfaceFile);
