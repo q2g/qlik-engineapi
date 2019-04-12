@@ -151,7 +151,7 @@
 
             logger.Info("Write Index file...");
             var indexBuilder = new StringBuilder();
-            indexBuilder.Append("// Type definitions for qlik-engineapi 12.67");
+            indexBuilder.AppendLine("// Type definitions for qlik-engineapi 12.67");
             indexBuilder.AppendLine("// Project: https://help.qlik.com/en-US/sense-developer/February2019/Subsystems/EngineAPI/Content/Sense_EngineAPI/introducing-engine-API.htm");
             indexBuilder.AppendLine("// Definitions by: Konrad Mattheis <https://github.com/konne>");            
             indexBuilder.AppendLine("// Definitions: https://github.com/DefinitelyTyped/DefinitelyTyped");
