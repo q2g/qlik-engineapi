@@ -84,7 +84,7 @@ namespace QlikApiParser
                     var match = Regex.Match(type, "List<([^\\>]+)\\>");
                     if (match.Success)
                     {
-                        type = $"Array<{GetTypeScriptType(match.Groups.ElementAt(1).Value)}>";
+                        type = $"{GetTypeScriptType(match.Groups.ElementAt(1).Value)}[]";
                     }
                     return type;
             }

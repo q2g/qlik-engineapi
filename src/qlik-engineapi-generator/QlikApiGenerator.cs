@@ -31,11 +31,13 @@ namespace QlikApiParser
         #region  Properties && Variables
         private List<IEngineObject> EngineObjects = new List<IEngineObject>();
         private QlikApiConfig Config;
+        private ScriptLanguage scriptLang;
         #endregion
 
-        public QlikApiGenerator(QlikApiConfig config)
+        public QlikApiGenerator(QlikApiConfig config, ScriptLanguage language)
         {
             Config = config;
+            scriptLang = language;
         }
 
         #region  private methods
@@ -77,6 +79,35 @@ namespace QlikApiParser
             return null;
         }
 
+        private IEnumerable<string> SplitToLines(string stringToSplit, int maxLineLength)
+        {
+            string[] words = stringToSplit.Split(' ');
+            StringBuilder line = new StringBuilder();
+            foreach (string word in words)
+            {
+                if (word.Length + line.Length <= maxLineLength)
+                {
+                    line.Append(word + " ");
+                }
+                else
+                {
+                    if (line.Length > 0)
+                    {
+                        yield return line.ToString().Trim();
+                        line.Clear();
+                    }
+                    string overflow = word;
+                    while (overflow.Length > maxLineLength)
+                    {
+                        yield return overflow.Substring(0, maxLineLength);
+                        overflow = overflow.Substring(maxLineLength);
+                    }
+                    line.Append(overflow + " ");
+                }
+            }
+            yield return line.ToString().Trim();
+        }
+
         private string GetFormatedEnumBlock(EngineEnum enumObject, ScriptLanguage language)
         {
             var builder = new StringBuilder();
@@ -97,7 +128,7 @@ namespace QlikApiParser
             {
                 if (language == ScriptLanguage.TypeScript)
                 {
-                    if(!String.IsNullOrEmpty(enumValue.Description))
+                    if (!String.IsNullOrEmpty(enumValue.Description))
                         builder.Append($"\"{enumValue.Description}\" | ");
                     if (!String.IsNullOrEmpty(enumValue.Title))
                         builder.Append($"\"{enumValue.Title}\" | ");
@@ -129,7 +160,14 @@ namespace QlikApiParser
                 return builder.ToString().TrimEnd(',').TrimEnd();
             }
             else
-                return $"{builder.ToString().TrimEnd().TrimEnd('|').TrimEnd()};";
+            {
+                var typeLine = $"{builder.ToString().TrimEnd().TrimEnd('|').TrimEnd()};";
+                var lines = SplitToLines(typeLine, 194).ToList();
+                var sb = new StringBuilder();
+                foreach (var line in lines)
+                    sb.Append($"\t{line}{Environment.NewLine}");
+                return sb.ToString().Trim();
+            }
         }
 
         private EngineEnum EnumExists(EngineEnum engineEnum)
@@ -404,6 +442,7 @@ namespace QlikApiParser
                     returnType = $"Promise<{resultClass.Name}>";
                 }
             }
+
             if (method.UseGeneric)
                 returnType = "Promise<T>";
             var methodBuilder = new StringBuilder();
@@ -570,28 +609,31 @@ namespace QlikApiParser
                                 }
 
                                 //T version from original
-                                var jsonMethod = CreateMethodClone(engineMethod);
-                                jsonMethod.UseGeneric = true;
-                                engineInterface.Methods.Add(jsonMethod);
-
-                                if (engineMethod.Parameters.Count > 0)
+                                if (scriptLang == ScriptLanguage.CSharp)
                                 {
-                                    // Add a JObject version as parameter
-                                    jsonMethod = CreateMethodClone(engineMethod);
-                                    jsonMethod.Parameters.Clear();
-                                    jsonMethod.Parameters.Add(new EngineParameter()
-                                    {
-                                        Name = "param",
-                                        Type = "JObject",
-                                        Required = true,
-                                        Description = "Qlik Parameter as JSON object.",
-                                    });
-                                    engineInterface.Methods.Add(jsonMethod);
-
-                                    //T version from JObejct
-                                    jsonMethod = CreateMethodClone(jsonMethod);
+                                    var jsonMethod = CreateMethodClone(engineMethod);
                                     jsonMethod.UseGeneric = true;
                                     engineInterface.Methods.Add(jsonMethod);
+
+                                    if (engineMethod.Parameters.Count > 0)
+                                    {
+                                        // Add a JObject version as parameter
+                                        jsonMethod = CreateMethodClone(engineMethod);
+                                        jsonMethod.Parameters.Clear();
+                                        jsonMethod.Parameters.Add(new EngineParameter()
+                                        {
+                                            Name = "param",
+                                            Type = "JObject",
+                                            Required = true,
+                                            Description = "Qlik Parameter as JSON object.",
+                                        });
+                                        engineInterface.Methods.Add(jsonMethod);
+
+                                        //T version from JObejct
+                                        jsonMethod = CreateMethodClone(jsonMethod);
+                                        jsonMethod.UseGeneric = true;
+                                        engineInterface.Methods.Add(jsonMethod);
+                                    }
                                 }
                             }
                         }
@@ -664,14 +706,14 @@ namespace QlikApiParser
             }
         }
 
-        public void SaveTo(QlikApiConfig config, List<IEngineObject> engineObjects, string savePath, List<string> injectPragmas = null, ScriptLanguage language = ScriptLanguage.CSharp)
+        public void SaveTo(QlikApiConfig config, List<IEngineObject> engineObjects, string savePath, List<string> injectPragmas = null)
         {
             try
             {
                 var enumList = new List<string>();
                 var fileContent = new StringBuilder();
 
-                switch (language)
+                switch (scriptLang)
                 {
                     case ScriptLanguage.CSharp:
                         fileContent.Append($"namespace {config.NamespaceName}");
@@ -691,7 +733,7 @@ namespace QlikApiParser
                         //Empty for index.d.ts
                         break;
                     default:
-                        throw new Exception($"Unknown script language {language.ToString()}");
+                        throw new Exception($"Unknown script language {scriptLang.ToString()}");
                 }
                 fileContent.AppendLine();
 
@@ -703,26 +745,26 @@ namespace QlikApiParser
                 var enumObjects = engineObjects.Where(d => d.EngType == EngineType.ENUM).ToList();
                 if (enumObjects.Count > 0)
                 {
-                    fileContent.AppendLine(QlikApiUtils.Indented(GetStartRegion("Enums", language), 1));
+                    fileContent.AppendLine(QlikApiUtils.Indented(GetStartRegion("Enums", scriptLang), 1));
                     logger.Debug($"Write Enums {enumObjects.Count}");
                     foreach (EngineEnum enumValue in enumObjects)
                     {
                         lineCounter++;
-                        var enumResult = GetFormatedEnumBlock(enumValue, language);
+                        var enumResult = GetFormatedEnumBlock(enumValue, scriptLang);
                         fileContent.AppendLine(enumResult);
                         if (lineCounter < enumObjects.Count)
                             fileContent.AppendLine();
                     }
-                    fileContent.AppendLine(QlikApiUtils.Indented(GetEndRegion(language), 1));
+                    fileContent.AppendLine(QlikApiUtils.Indented(GetEndRegion(scriptLang), 1));
                     fileContent.AppendLine();
                 }
                 var interfaceObjects = engineObjects.Where(d => d.EngType == EngineType.INTERFACE).ToList();
                 if (interfaceObjects.Count > 0)
                 {
                     logger.Debug($"Write Interfaces {interfaceObjects.Count}");
-                    fileContent.AppendLine(QlikApiUtils.Indented(GetStartRegion("Interfaces", language), 1));
+                    fileContent.AppendLine(QlikApiUtils.Indented(GetStartRegion("Interfaces", scriptLang), 1));
                     lineCounter = 0;
-                    var descBuilder = new DescritpionBuilder(Config.UseDescription, language);
+                    var descBuilder = new DescritpionBuilder(Config.UseDescription, scriptLang);
                     foreach (EngineInterface interfaceObject in interfaceObjects)
                     {
                         lineCounter++;
@@ -734,7 +776,7 @@ namespace QlikApiParser
                         //Special for ObjectInterface => Add IObjectInterface
                         var implInterface = String.Empty;
 
-                        switch (language)
+                        switch (scriptLang)
                         {
                             case ScriptLanguage.CSharp:
                                 if (Config.BaseObjectInterfaceName != interfaceObject.Name)
@@ -748,7 +790,7 @@ namespace QlikApiParser
                                 fileContent.AppendLine(QlikApiUtils.Indented($"interface {interfaceObject.Name}{implInterface} {{", 1));
                                 break;
                             default:
-                                throw new Exception($"Unknown script language {language.ToString()}");
+                                throw new Exception($"Unknown script language {scriptLang.ToString()}");
                         }
 
                         var properties = interfaceObject.Properties;
@@ -756,7 +798,7 @@ namespace QlikApiParser
                         {
                             if (!String.IsNullOrEmpty(property.Description))
                             {
-                                var propDescBuilder = new DescritpionBuilder(Config.UseDescription, language)
+                                var propDescBuilder = new DescritpionBuilder(Config.UseDescription, scriptLang)
                                 {
                                     Summary = property.Description,
                                 };
@@ -765,7 +807,7 @@ namespace QlikApiParser
                                     fileContent.AppendLine(description);
                             }
 
-                            switch (language)
+                            switch (scriptLang)
                             {
                                 case ScriptLanguage.CSharp:
                                     fileContent.AppendLine(QlikApiUtils.Indented($"{QlikApiUtils.GetDotNetType(property.Type)} {property.Name} {{ get; set; }}", 2));
@@ -774,32 +816,37 @@ namespace QlikApiParser
                                     fileContent.AppendLine(QlikApiUtils.Indented($"{property.Name}: {QlikApiUtils.GetTypeScriptType(property.Type)};", 2));
                                     break;
                                 default:
-                                    throw new Exception($"Unknown script language {language.ToString()}");
+                                    throw new Exception($"Unknown script language {scriptLang.ToString()}");
                             }
                         }
 
+                        var methodIndex = 0;
                         foreach (var methodObject in interfaceObject.Methods)
                         {
-                            switch (language)
+                            methodIndex++;
+                            switch (scriptLang)
                             {
                                 case ScriptLanguage.CSharp:
                                     fileContent.AppendLine(GetFormatedDotNetMethod(methodObject));
                                     break;
                                 case ScriptLanguage.TypeScript:
-                                    fileContent.AppendLine(GetFormatedTypeScriptMethod(methodObject));
+                                    if (methodIndex == interfaceObject.Methods.Count)
+                                        fileContent.AppendLine(GetFormatedTypeScriptMethod(methodObject).TrimEnd());
+                                    else
+                                        fileContent.AppendLine(GetFormatedTypeScriptMethod(methodObject));
                                     break;
                                 default:
-                                    throw new Exception($"Unknown script language {language.ToString()}");
+                                    throw new Exception($"Unknown script language {scriptLang.ToString()}");
                             }
                         }
 
-                        var builder = new DescritpionBuilder(Config.UseDescription, language);
+                        var builder = new DescritpionBuilder(Config.UseDescription, scriptLang);
                         if (Config.BaseObjectInterfaceName == interfaceObject.Name)
                         {
                             builder.Summary = "This event fires when to notify subscribers that a change has occured.";
                             desc = builder.Generate(2);
                             fileContent.AppendLine(desc);
-                            switch (language)
+                            switch (scriptLang)
                             {
                                 case ScriptLanguage.CSharp:
                                     fileContent.AppendLine(QlikApiUtils.Indented("event EventHandler Changed;", 2));
@@ -808,12 +855,12 @@ namespace QlikApiParser
                                     fileContent.AppendLine(QlikApiUtils.Indented("changed(fn: () => void): void;", 2));
                                     break;
                                 default:
-                                    throw new Exception($"Unknown script language {language.ToString()}");
+                                    throw new Exception($"Unknown script language {scriptLang.ToString()}");
                             }
                             builder.Summary = "This event fires when the Qlik Sense entity has been removed or deleted.";
                             desc = builder.Generate(2);
                             fileContent.AppendLine(desc);
-                            switch (language)
+                            switch (scriptLang)
                             {
                                 case ScriptLanguage.CSharp:
                                     fileContent.AppendLine(QlikApiUtils.Indented("event EventHandler Closed;", 2));
@@ -822,12 +869,12 @@ namespace QlikApiParser
                                     fileContent.AppendLine(QlikApiUtils.Indented("closed(fn: () => void): void;", 2));
                                     break;
                                 default:
-                                    throw new Exception($"Unknown script language {language.ToString()}");
+                                    throw new Exception($"Unknown script language {scriptLang.ToString()}");
                             }
                             builder.Summary = "This event fires when to notify subscribers that a change has occured.";
                             desc = builder.Generate(2);
                             fileContent.AppendLine(desc);
-                            switch (language)
+                            switch (scriptLang)
                             {
                                 case ScriptLanguage.CSharp:
                                     fileContent.AppendLine(QlikApiUtils.Indented("void OnChanged();", 2));
@@ -836,7 +883,7 @@ namespace QlikApiParser
                                     fileContent.AppendLine(QlikApiUtils.Indented("onChanged(): void;", 2));
                                     break;
                                 default:
-                                    throw new Exception($"Unknown script language {language.ToString()}");
+                                    throw new Exception($"Unknown script language {scriptLang.ToString()}");
                             }
                         }
 
@@ -844,17 +891,17 @@ namespace QlikApiParser
                         if (lineCounter < interfaceObjects.Count)
                             fileContent.AppendLine();
                     }
-                    fileContent.AppendLine(QlikApiUtils.Indented(GetEndRegion(language), 2));
+                    fileContent.AppendLine(QlikApiUtils.Indented(GetEndRegion(scriptLang), 2));
                     fileContent.AppendLine();
                 }
                 var classObjects = engineObjects.Where(d => d.EngType == EngineType.CLASS).ToList();
                 if (classObjects.Count > 0)
                 {
 
-                    fileContent.AppendLine(QlikApiUtils.Indented(GetStartRegion("Classes", language), 1));
+                    fileContent.AppendLine(QlikApiUtils.Indented(GetStartRegion("Classes", scriptLang), 1));
                     logger.Debug($"Write Classes {classObjects.Count}");
                     lineCounter = 0;
-                    var descBuilder = new DescritpionBuilder(Config.UseDescription, language);
+                    var descBuilder = new DescritpionBuilder(Config.UseDescription, scriptLang);
                     foreach (EngineClass classObject in classObjects)
                     {
                         lineCounter++;
@@ -864,7 +911,7 @@ namespace QlikApiParser
                         if (!String.IsNullOrEmpty(desc))
                             fileContent.AppendLine(desc);
 
-                        switch (language)
+                        switch (scriptLang)
                         {
                             case ScriptLanguage.CSharp:
                                 fileContent.AppendLine(QlikApiUtils.Indented($"public class {classObject.Name}<###implements###>", 1));
@@ -874,19 +921,19 @@ namespace QlikApiParser
                                 fileContent.AppendLine(QlikApiUtils.Indented($"interface {classObject.Name}<###implements###> {{", 1));
                                 break;
                             default:
-                                throw new Exception($"Unknown script language {language.ToString()}");
+                                throw new Exception($"Unknown script language {scriptLang.ToString()}");
                         }
 
                         if (classObject.Properties.Count > 0)
                         {
-                            fileContent.AppendLine(QlikApiUtils.Indented(GetStartRegion("Properties", language), 2));
+                            fileContent.AppendLine(QlikApiUtils.Indented(GetStartRegion("Properties", scriptLang), 2));
                             var propertyCount = 0;
                             foreach (var property in classObject.Properties)
                             {
                                 propertyCount++;
                                 if (!String.IsNullOrEmpty(property.Description))
                                 {
-                                    var builder = new DescritpionBuilder(Config.UseDescription, language)
+                                    var builder = new DescritpionBuilder(Config.UseDescription, scriptLang)
                                     {
                                         Summary = property.Description,
                                     };
@@ -901,7 +948,7 @@ namespace QlikApiParser
                                     dValue = property.Default.ToLowerInvariant();
                                     if (property.IsEnumType)
                                         dValue = GetEnumDefault(property.GetRefType(), property.Default);
-                                    if (language == ScriptLanguage.CSharp)
+                                    if (scriptLang == ScriptLanguage.CSharp)
                                         fileContent.AppendLine(QlikApiUtils.Indented($"[DefaultValue({dValue})]", 2));
                                 }
 
@@ -910,28 +957,28 @@ namespace QlikApiParser
                                 var refType = property.GetRefType();
                                 if (classObject.Type == "array")
                                 {
-                                    implements = GetImplemention(property, language);
+                                    implements = GetImplemention(property, scriptLang);
                                     fileContent.Replace("<###implements###>", implements);
                                 }
                                 else if (property.Type == "array")
                                 {
-                                    switch (language)
+                                    switch (scriptLang)
                                     {
                                         case ScriptLanguage.CSharp:
                                             fileContent.AppendLine(QlikApiUtils.Indented($"public List<{QlikApiUtils.GetDotNetType(refType)}> {property.Name} {{ get; set; }}", 2));
                                             break;
                                         case ScriptLanguage.TypeScript:
-                                            fileContent.AppendLine(QlikApiUtils.Indented($"{property.Name}: Array<{QlikApiUtils.GetTypeScriptType(refType)}>", 2));
+                                            fileContent.AppendLine(QlikApiUtils.Indented($"{property.Name}: {QlikApiUtils.GetTypeScriptType(refType)}[];", 2));
                                             break;
                                         default:
-                                            throw new Exception($"Unknown script language {language.ToString()}");
+                                            throw new Exception($"Unknown script language {scriptLang.ToString()}");
                                     }
                                 }
                                 else
                                 {
                                     var resultType = String.Empty;
                                     var propertyText = String.Empty;
-                                    switch (language)
+                                    switch (scriptLang)
                                     {
                                         case ScriptLanguage.CSharp:
                                             resultType = QlikApiUtils.GetDotNetType(property.Type);
@@ -945,10 +992,10 @@ namespace QlikApiParser
                                             resultType = QlikApiUtils.GetTypeScriptType(property.Type);
                                             if (!String.IsNullOrEmpty(refType))
                                                 resultType = refType;
-                                            propertyText = QlikApiUtils.Indented($"{property.Name}: {QlikApiUtils.GetTypeScriptType(resultType)}", 2);
+                                            propertyText = QlikApiUtils.Indented($"{property.Name}: {QlikApiUtils.GetTypeScriptType(resultType)};", 2);
                                             break;
                                         default:
-                                            throw new Exception($"Unknown script language {language.ToString()}");
+                                            throw new Exception($"Unknown script language {scriptLang.ToString()}");
                                     }
                                     fileContent.AppendLine(propertyText);
                                 }
@@ -956,16 +1003,16 @@ namespace QlikApiParser
                                 if (propertyCount < classObject.Properties.Count)
                                     fileContent.AppendLine();
                             }
-                            fileContent.AppendLine(QlikApiUtils.Indented(GetEndRegion(language), 2));
+                            fileContent.AppendLine(QlikApiUtils.Indented(GetEndRegion(scriptLang), 2));
                         }
                         fileContent.Replace("<###implements###>", "");
                         fileContent.AppendLine(QlikApiUtils.Indented("}", 1));
                         if (lineCounter < classObjects.Count)
                             fileContent.AppendLine();
                     }
-                    fileContent.AppendLine(QlikApiUtils.Indented(GetEndRegion(language), 1));
+                    fileContent.AppendLine(QlikApiUtils.Indented(GetEndRegion(scriptLang), 1));
                 }
-                if (language == ScriptLanguage.CSharp)
+                if (scriptLang == ScriptLanguage.CSharp)
                     fileContent.AppendLine("}");
                 var content = fileContent.ToString().Trim();
                 File.WriteAllText(savePath, content);

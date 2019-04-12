@@ -38,7 +38,6 @@ namespace QlikApiParser
         public AsyncMode AsyncMode { get; set; } = AsyncMode.SHOW;
         [JsonProperty]
         public bool GenerateCancelationToken { get; set; } = true;
-
         [JsonIgnore]
         public string BaseObjectInterfaceClassName { get; } = "ObjectInterface";
         [JsonIgnore]
