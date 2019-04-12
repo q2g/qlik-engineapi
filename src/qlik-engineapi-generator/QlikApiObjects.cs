@@ -122,7 +122,7 @@ namespace QlikApiParser
                 case ScriptLanguage.CSharp:
                     return $"List<{QlikApiUtils.GetDotNetType(itemType)}>";
                 case ScriptLanguage.TypeScript:
-                    return $"Array<{QlikApiUtils.GetTypeScriptType(itemType)}>";
+                    return $"{QlikApiUtils.GetTypeScriptType(itemType)}[]";
                 default:
                     throw new Exception($"Unknown script language {language.ToString()}");
             }
@@ -143,7 +143,7 @@ namespace QlikApiParser
                     case ScriptLanguage.CSharp:
                         return $"List<{QlikApiUtils.GetDotNetType(result)}>";
                     case ScriptLanguage.TypeScript:
-                        return $"Array<{QlikApiUtils.GetTypeScriptType(result)}>";
+                        return $"{QlikApiUtils.GetTypeScriptType(result)}[]";
                     default:
                         throw new Exception($"Unknown script language {language.ToString()}");
                 }
@@ -358,7 +358,13 @@ namespace QlikApiParser
             if (language == ScriptLanguage.CSharp)
                 value = value.Replace("</note> <note", "</note>\r\n    /// <note");
             else if (language == ScriptLanguage.TypeScript)
-                value = value.Replace("</note> <note", "</note>\r\n    * <note");
+            {
+                if(value.Contains("The type of an object cannot be updated."))
+                {
+                    var kk = 0;
+                }
+                value = value.Replace("</note> <note", "</note>\r\n         * <note");
+            }
             else
                 throw new Exception($"Unknown script language {language.ToString()}");
             return value;
@@ -409,6 +415,11 @@ namespace QlikApiParser
                     builder.AppendLine(QlikApiUtils.Indented($"/**", layer));
                     if (!String.IsNullOrEmpty(Summary))
                         builder.AppendLine(GetFormatedTypscriptList(Summary.Split('\n').ToList(), "", layer));
+                    else
+                    {
+                        Summary = "Please, add a Description";
+                        builder.AppendLine(GetFormatedTypscriptList(Summary.Split('\n').ToList(), "", layer));
+                    }
 
                     if (Param != null && Param.Count > 0)
                     {

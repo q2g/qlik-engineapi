@@ -65,11 +65,11 @@
                 }
 
                 logger.Info("Start parsing...");
-                var qlikApiGenerator = new QlikApiGenerator(config);
+                var qlikApiGenerator = new QlikApiGenerator(config, ScriptLanguage.CSharp);
                 var engineObjects = qlikApiGenerator.ReadJson(origJsonObject);
                 WriteCSharp(engineObjects, config, qlikApiGenerator);
 
-                qlikApiGenerator = new QlikApiGenerator(config);
+                qlikApiGenerator = new QlikApiGenerator(config, ScriptLanguage.TypeScript);
                 engineObjects = qlikApiGenerator.ReadJson(origJsonObject);
                 WriteTypeScript(engineObjects, config, qlikApiGenerator);
 
@@ -137,28 +137,32 @@
             logger.Info("Write Enums...");
             var objectResults = engineObjects.Where(o => o.EngType == EngineType.ENUM).ToList();
             var enumFile = Path.Combine(config.TypeScriptFolder, "Enums.d.ts");
-            qlikApiGenerator.SaveTo(config, objectResults, enumFile, null, ScriptLanguage.TypeScript);
+            qlikApiGenerator.SaveTo(config, objectResults, enumFile, null);
 
             logger.Info("Write Interfaces...");
             objectResults = engineObjects.Where(o => o.EngType == EngineType.INTERFACE).ToList();
             var interfaceFile = Path.Combine(config.TypeScriptFolder, "Interfaces.d.ts");
-            qlikApiGenerator.SaveTo(config, objectResults, interfaceFile, null, ScriptLanguage.TypeScript);
+            qlikApiGenerator.SaveTo(config, objectResults, interfaceFile, null);
 
             logger.Info("Write Classes...");
             objectResults = engineObjects.Where(o => o.EngType == EngineType.CLASS).ToList();
             var classFile = Path.Combine(config.TypeScriptFolder, $"Class.d.ts");
-            qlikApiGenerator.SaveTo(config, objectResults, classFile, null, ScriptLanguage.TypeScript);
+            qlikApiGenerator.SaveTo(config, objectResults, classFile, null);
 
             logger.Info("Write Index file...");
             var indexBuilder = new StringBuilder();
+            indexBuilder.Append("// Type definitions for qlik-engineapi 12.67");
+            indexBuilder.AppendLine("// Project: http://help.qlik.com/en-US/sense-developer/November2017/Subsystems/EngineAPI/Content/introducing-engine-API.htm");
+            indexBuilder.AppendLine("// Definitions by: Konrad Mattheis <https://github.com/konne>");
+            indexBuilder.AppendLine("//                 Richard Ison <https://github.com/richardison>");
+            indexBuilder.AppendLine("// Definitions: https://github.com/DefinitelyTyped/DefinitelyTyped");
+            indexBuilder.AppendLine();
             indexBuilder.Append($"declare namespace {config.NamespaceName} {{");
             indexBuilder.AppendLine();
             var content = File.ReadAllText(enumFile);
             indexBuilder.AppendLine($"\n    {content}");
-            indexBuilder.AppendLine();
             content = File.ReadAllText(interfaceFile);
             indexBuilder.AppendLine($"\n    {content}");
-            indexBuilder.AppendLine();
             content = File.ReadAllText(classFile);
             indexBuilder.AppendLine($"\n    {content}");
             indexBuilder.AppendLine("}");
