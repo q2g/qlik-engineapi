@@ -363,8 +363,30 @@ namespace QlikApiParser
 
             if (value.Length > 180)
             {
-                value = value.Replace(". ", ".\r\n");
-                value = value.Replace("[br]", "[br]\r\n");
+                if (value.StartsWith("When set to true, generated nodes (based on current selection)"))
+                    Console.WriteLine();
+
+                var words = value.Split(" ");
+                var lines = new StringBuilder();
+                var line = "";
+                for (int i = 0; i < words.Length; i++)
+                {
+                    if ((line.Length + words[i].Length) < 180)
+                    {
+                        if (line.Length > 0)
+                            line += " ";
+                        line += words[i];
+                    }
+                    else
+                    {
+                        lines.AppendLine(line);
+                        line = "";
+                    }
+                }
+                
+                value = lines.ToString().TrimEnd();
+                //value = value.Replace(". ", ".\r\n");
+                //value = value.Replace("[br]", "[br]\r\n");
             }
             return value.Split("\r\n").ToList();
         }
