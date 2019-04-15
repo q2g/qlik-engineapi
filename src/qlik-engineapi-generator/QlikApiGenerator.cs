@@ -473,7 +473,11 @@ namespace QlikApiParser
                 tvalue = "<T>";
 
             var methodName = String.Format("{0}{1}", method.Name.First().ToString().ToLowerInvariant(), method.Name.Substring(1));
-            methodBuilder.AppendLine(QlikApiUtils.Indented($"{methodName}{tvalue}({parameterValue}): {returnType};", 2));
+            var fullMethod = $"{methodName}{tvalue}({parameterValue}): {returnType};";
+            if(fullMethod.Length > 199)
+                methodBuilder.AppendLine(QlikApiUtils.Indented(fullMethod.Replace("):",$"){Environment.NewLine}{QlikApiUtils.Indented(":", 2)}"), 2));
+            else
+                methodBuilder.AppendLine(QlikApiUtils.Indented(fullMethod, 2));
             return methodBuilder.ToString();
         }
 
@@ -751,7 +755,7 @@ namespace QlikApiParser
                     {
                         lineCounter++;
                         var enumResult = GetFormatedEnumBlock(enumValue, scriptLang);
-                        fileContent.AppendLine(QlikApiUtils.Indented(enumResult,1));
+                        fileContent.AppendLine(QlikApiUtils.Indented(enumResult, 1));
                         if (lineCounter < enumObjects.Count)
                             fileContent.AppendLine();
                     }
@@ -896,7 +900,7 @@ namespace QlikApiParser
                 }
                 var classObjects = engineObjects.Where(d => d.EngType == EngineType.CLASS).ToList();
                 if (classObjects.Count > 0)
-                {                   
+                {
                     fileContent.AppendLine(QlikApiUtils.Indented(GetStartRegion("Classes", scriptLang), 1));
                     logger.Debug($"Write Classes {classObjects.Count}");
                     lineCounter = 0;
