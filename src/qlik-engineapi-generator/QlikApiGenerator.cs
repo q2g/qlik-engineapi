@@ -458,13 +458,13 @@ namespace QlikApiParser
                 {
                     var defaultValue = String.Empty;
                     if (!para.Required)
-                        defaultValue = $" = {QlikApiUtils.GetDefaultValue(para.Type, para.Default)}";
+                        defaultValue = $"?";
 
                     var type = para.Type;
                     if (para.Items != null)
                         type = para.GetEnumType();
 
-                    parameter.Append($"{para.Name}: {QlikApiUtils.GetTypeScriptType(type)}, ");
+                    parameter.Append($"{para.Name}{defaultValue}: {QlikApiUtils.GetTypeScriptType(type)}, ");
                 }
             }
             var parameterValue = parameter.ToString().TrimEnd().TrimEnd(',');
