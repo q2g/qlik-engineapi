@@ -163,6 +163,12 @@
             indexBuilder.AppendLine($"\n    {content}");
             content = File.ReadAllText(classFile);
             indexBuilder.AppendLine($"\n    {content}");
+            indexBuilder.AppendLine("}");
+
+            indexBuilder.AppendLine("");
+            indexBuilder.AppendLine("declare namespace enigmaJS {");
+            indexBuilder.AppendLine("    interface IGeneratedAPI {");
+            indexBuilder.AppendLine("    }");
             indexBuilder.AppendLine("}");            
 
             File.WriteAllText(Path.Combine(config.TypeScriptFolder, "index.d.ts"), indexBuilder.ToString());

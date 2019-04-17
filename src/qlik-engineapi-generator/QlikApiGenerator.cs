@@ -775,6 +775,8 @@ namespace QlikApiParser
 
                         //Special for ObjectInterface => Add IObjectInterface
                         var implInterface = String.Empty;
+                        if ((interfaceObject.Name == "IObjectInterface" && scriptLang == ScriptLanguage.TypeScript))
+                            implInterface = " extends enigmaJS.IGeneratedAPI";
 
                         switch (scriptLang)
                         {
@@ -793,97 +795,101 @@ namespace QlikApiParser
                                 throw new Exception($"Unknown script language {scriptLang.ToString()}");
                         }
 
-                        var properties = interfaceObject.Properties;
-                        foreach (var property in properties)
+                        if (!(interfaceObject.Name == "IObjectInterface" && scriptLang ==ScriptLanguage.TypeScript))
                         {
-                            if (!String.IsNullOrEmpty(property.Description))
+
+                            var properties = interfaceObject.Properties;
+                            foreach (var property in properties)
                             {
-                                var propDescBuilder = new DescritpionBuilder(Config.UseDescription, scriptLang)
+                                if (!String.IsNullOrEmpty(property.Description))
                                 {
-                                    Summary = property.Description,
-                                };
-                                var description = propDescBuilder.Generate(2);
-                                if (!String.IsNullOrEmpty(description))
-                                    fileContent.AppendLine(description);
+                                    var propDescBuilder = new DescritpionBuilder(Config.UseDescription, scriptLang)
+                                    {
+                                        Summary = property.Description,
+                                    };
+                                    var description = propDescBuilder.Generate(2);
+                                    if (!String.IsNullOrEmpty(description))
+                                        fileContent.AppendLine(description);
+                                }
+
+                                switch (scriptLang)
+                                {
+                                    case ScriptLanguage.CSharp:
+                                        fileContent.AppendLine(QlikApiUtils.Indented($"{QlikApiUtils.GetDotNetType(property.Type)} {property.Name} {{ get; set; }}", 2));
+                                        break;
+                                    case ScriptLanguage.TypeScript:
+                                        fileContent.AppendLine(QlikApiUtils.Indented($"{property.Name}: {QlikApiUtils.GetTypeScriptType(property.Type)};", 2));
+                                        break;
+                                    default:
+                                        throw new Exception($"Unknown script language {scriptLang.ToString()}");
+                                }
                             }
 
-                            switch (scriptLang)
+                            var methodIndex = 0;
+                            foreach (var methodObject in interfaceObject.Methods)
                             {
-                                case ScriptLanguage.CSharp:
-                                    fileContent.AppendLine(QlikApiUtils.Indented($"{QlikApiUtils.GetDotNetType(property.Type)} {property.Name} {{ get; set; }}", 2));
-                                    break;
-                                case ScriptLanguage.TypeScript:
-                                    fileContent.AppendLine(QlikApiUtils.Indented($"{property.Name}: {QlikApiUtils.GetTypeScriptType(property.Type)};", 2));
-                                    break;
-                                default:
-                                    throw new Exception($"Unknown script language {scriptLang.ToString()}");
+                                methodIndex++;
+                                switch (scriptLang)
+                                {
+                                    case ScriptLanguage.CSharp:
+                                        fileContent.AppendLine(GetFormatedDotNetMethod(methodObject));
+                                        break;
+                                    case ScriptLanguage.TypeScript:
+                                        if (methodIndex == interfaceObject.Methods.Count)
+                                            fileContent.AppendLine(GetFormatedTypeScriptMethod(methodObject).TrimEnd());
+                                        else
+                                            fileContent.AppendLine(GetFormatedTypeScriptMethod(methodObject));
+                                        break;
+                                    default:
+                                        throw new Exception($"Unknown script language {scriptLang.ToString()}");
+                                }
                             }
-                        }
 
-                        var methodIndex = 0;
-                        foreach (var methodObject in interfaceObject.Methods)
-                        {
-                            methodIndex++;
-                            switch (scriptLang)
+                            var builder = new DescritpionBuilder(Config.UseDescription, scriptLang);
+                            if (Config.BaseObjectInterfaceName == interfaceObject.Name)
                             {
-                                case ScriptLanguage.CSharp:
-                                    fileContent.AppendLine(GetFormatedDotNetMethod(methodObject));
-                                    break;
-                                case ScriptLanguage.TypeScript:
-                                    if (methodIndex == interfaceObject.Methods.Count)
-                                        fileContent.AppendLine(GetFormatedTypeScriptMethod(methodObject).TrimEnd());
-                                    else
-                                        fileContent.AppendLine(GetFormatedTypeScriptMethod(methodObject));
-                                    break;
-                                default:
-                                    throw new Exception($"Unknown script language {scriptLang.ToString()}");
-                            }
-                        }
-
-                        var builder = new DescritpionBuilder(Config.UseDescription, scriptLang);
-                        if (Config.BaseObjectInterfaceName == interfaceObject.Name)
-                        {
-                            builder.Summary = "This event fires when to notify subscribers that a change has occured.";
-                            desc = builder.Generate(2);
-                            fileContent.AppendLine(desc);
-                            switch (scriptLang)
-                            {
-                                case ScriptLanguage.CSharp:
-                                    fileContent.AppendLine(QlikApiUtils.Indented("event EventHandler Changed;", 2));
-                                    break;
-                                case ScriptLanguage.TypeScript:
-                                    fileContent.AppendLine(QlikApiUtils.Indented("changed(fn: () => void): void;", 2));
-                                    break;
-                                default:
-                                    throw new Exception($"Unknown script language {scriptLang.ToString()}");
-                            }
-                            builder.Summary = "This event fires when the Qlik Sense entity has been removed or deleted.";
-                            desc = builder.Generate(2);
-                            fileContent.AppendLine(desc);
-                            switch (scriptLang)
-                            {
-                                case ScriptLanguage.CSharp:
-                                    fileContent.AppendLine(QlikApiUtils.Indented("event EventHandler Closed;", 2));
-                                    break;
-                                case ScriptLanguage.TypeScript:
-                                    fileContent.AppendLine(QlikApiUtils.Indented("closed(fn: () => void): void;", 2));
-                                    break;
-                                default:
-                                    throw new Exception($"Unknown script language {scriptLang.ToString()}");
-                            }
-                            builder.Summary = "This event fires when to notify subscribers that a change has occured.";
-                            desc = builder.Generate(2);
-                            fileContent.AppendLine(desc);
-                            switch (scriptLang)
-                            {
-                                case ScriptLanguage.CSharp:
-                                    fileContent.AppendLine(QlikApiUtils.Indented("void OnChanged();", 2));
-                                    break;
-                                case ScriptLanguage.TypeScript:
-                                    fileContent.AppendLine(QlikApiUtils.Indented("onChanged(): void;", 2));
-                                    break;
-                                default:
-                                    throw new Exception($"Unknown script language {scriptLang.ToString()}");
+                                builder.Summary = "This event fires when to notify subscribers that a change has occured.";
+                                desc = builder.Generate(2);
+                                fileContent.AppendLine(desc);
+                                switch (scriptLang)
+                                {
+                                    case ScriptLanguage.CSharp:
+                                        fileContent.AppendLine(QlikApiUtils.Indented("event EventHandler Changed;", 2));
+                                        break;
+                                    case ScriptLanguage.TypeScript:
+                                        fileContent.AppendLine(QlikApiUtils.Indented("changed(fn: () => void): void;", 2));
+                                        break;
+                                    default:
+                                        throw new Exception($"Unknown script language {scriptLang.ToString()}");
+                                }
+                                builder.Summary = "This event fires when the Qlik Sense entity has been removed or deleted.";
+                                desc = builder.Generate(2);
+                                fileContent.AppendLine(desc);
+                                switch (scriptLang)
+                                {
+                                    case ScriptLanguage.CSharp:
+                                        fileContent.AppendLine(QlikApiUtils.Indented("event EventHandler Closed;", 2));
+                                        break;
+                                    case ScriptLanguage.TypeScript:
+                                        fileContent.AppendLine(QlikApiUtils.Indented("closed(fn: () => void): void;", 2));
+                                        break;
+                                    default:
+                                        throw new Exception($"Unknown script language {scriptLang.ToString()}");
+                                }
+                                builder.Summary = "This event fires when to notify subscribers that a change has occured.";
+                                desc = builder.Generate(2);
+                                fileContent.AppendLine(desc);
+                                switch (scriptLang)
+                                {
+                                    case ScriptLanguage.CSharp:
+                                        fileContent.AppendLine(QlikApiUtils.Indented("void OnChanged();", 2));
+                                        break;
+                                    case ScriptLanguage.TypeScript:
+                                        fileContent.AppendLine(QlikApiUtils.Indented("onChanged(): void;", 2));
+                                        break;
+                                    default:
+                                        throw new Exception($"Unknown script language {scriptLang.ToString()}");
+                                }
                             }
                         }
 
