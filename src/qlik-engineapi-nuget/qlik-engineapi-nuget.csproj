@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>net452;netcoreapp3.1</TargetFrameworks>    
+    <TargetFrameworks>net452;netcoreapp3.1</TargetFrameworks>
     <RootNamespace>Qlik.EngineAPI</RootNamespace>
     <AssemblyName>qlik-engineapi</AssemblyName>
     <Company>akquinet finance &amp; controlling GmbH</Company>
@@ -8,24 +8,15 @@
     <Copyright>Copyright (c) $([System.DateTime]::Today.ToString('yyyy'))</Copyright>
     <Authors>akquinet finance &amp; controlling GmbH</Authors>
     <RepositoryUrl>https://github.com/q2g/qlik-engineapi.git</RepositoryUrl>
-    <PackageLicenseUrl>https://raw.githubusercontent.com/q2g/qlik-engineapi/master/LICENSE</PackageLicenseUrl>
-    <PackageProjectUrl>https://github.com/q2g/qlik-engineapi</PackageProjectUrl>   
     <Description>Automated Classes for the Qlik EngineAPI</Description>
-    <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
-    <PackageReleaseNotes></PackageReleaseNotes>    
-    <PackageTags>qlik sense engine engineapi</PackageTags>
-    <Version>$(GitVersion_NuGetVersion)</Version>
-    <GenerateAssemblyFileVersionAttribute>false</GenerateAssemblyFileVersionAttribute>
-    <GenerateAssemblyInformationalVersionAttribute>false</GenerateAssemblyInformationalVersionAttribute>
-    <GenerateAssemblyVersionAttribute>false</GenerateAssemblyVersionAttribute>
-    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <Version>$(GitVersion_InformationalVersion)</Version>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
     <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />    
+    <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
     <PackageReference Include="GitVersionTask" Version="5.2.4" PrivateAssets="All" />
   </ItemGroup>
 
