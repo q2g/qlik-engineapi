@@ -2,10 +2,11 @@
   <PropertyGroup>
     <TargetFrameworks>net452;netcoreapp3.1</TargetFrameworks>    
     <RootNamespace>Qlik.EngineAPI</RootNamespace>
-    <AssemblyName>qlik-engineapi</AssemblyName>    
-    <Company />
+    <AssemblyName>qlik-engineapi</AssemblyName>
+    <Company>akquinet finance &amp; controlling GmbH</Company>
     <Product>XAML Markup Extensions</Product>
-    <Authors>Konrad Mattheis, Martin Berthold</Authors>
+    <Copyright>Copyright (c) $([System.DateTime]::Today.ToString('yyyy'))</Copyright>
+    <Authors>akquinet finance &amp; controlling GmbH</Authors>
     <RepositoryUrl>https://github.com/q2g/qlik-engineapi.git</RepositoryUrl>
     <PackageLicenseUrl>https://raw.githubusercontent.com/q2g/qlik-engineapi/master/LICENSE</PackageLicenseUrl>
     <PackageProjectUrl>https://github.com/q2g/qlik-engineapi</PackageProjectUrl>   
