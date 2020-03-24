@@ -1,6 +1,7 @@
 {
   "SourceFile": "jsonrpcapi.json",
   "OutputFolder": "../../../../qlik-engineapi-nuget/",
+  "TypeScriptFolder": "../../../",
   "UseDescription": true,
   "UseQlikResponse": true,
   "NamespaceName": "Qlik.EngineAPI",

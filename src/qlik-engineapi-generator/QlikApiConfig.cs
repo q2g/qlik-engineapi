@@ -27,6 +27,8 @@ namespace QlikApiParser
         [JsonProperty(Required = Required.Always)]
         public string OutputFolder { get; set; }
         [JsonProperty(Required = Required.Always)]
+        public string TypeScriptFolder { get; set; }
+        [JsonProperty(Required = Required.Always)]
         public string NamespaceName { get; set; }
         [JsonProperty]
         public bool UseQlikResponseLogic { get; set; } = true;
@@ -36,7 +38,6 @@ namespace QlikApiParser
         public AsyncMode AsyncMode { get; set; } = AsyncMode.SHOW;
         [JsonProperty]
         public bool GenerateCancelationToken { get; set; } = true;
-
         [JsonIgnore]
         public string BaseObjectInterfaceClassName { get; } = "ObjectInterface";
         [JsonIgnore]

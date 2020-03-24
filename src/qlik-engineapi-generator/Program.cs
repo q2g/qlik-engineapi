@@ -12,6 +12,7 @@
     using NLog.Config;
     using NLog;
     using System.Collections.Generic;
+    using System.Text;
     #endregion
 
     class Program
@@ -46,46 +47,31 @@
                 {
                     var changeJsonObject = GetJsonObject(changeJsonFile);
                     origJsonObject.Merge(changeJsonObject);
-                    var keyNames = new List<string>() {"qMode", "qType", "qFieldSelectionMode", "qState", "qGrouping", "qSortIndicator",
-                                                       "qDimensionType", "qExportState", "qReductionMode", "qMatchingFieldMode",
-                                                       "qGroup" };
+
                     var parameters = origJsonObject.SelectTokens("$...parameters").ToList();
                     var jArray = new JArray();
                     for (int i = 0; i < parameters.Count; i++)
                     {
-                         jArray = parameters[i].ToObject<JArray>();
-                         parameters[i].Replace(origJsonObject.MergeArray(jArray, keyNames));
+                        jArray = parameters[i].ToObject<JArray>();
+                        parameters[i].Replace(origJsonObject.MergeArray(jArray));
                     }
-                    keyNames = new List<string>() {"qReturn"};
+
                     var responses = origJsonObject.SelectTokens("$...responses").ToList();
                     for (int i = 0; i < responses.Count; i++)
                     {
                         jArray = responses[i].ToObject<JArray>();
-                        responses[i].Replace(origJsonObject.MergeArray(jArray, keyNames));
+                        responses[i].Replace(origJsonObject.MergeArray(jArray));
                     }
                 }
-                
+
                 logger.Info("Start parsing...");
-                var qlikApiGenerator = new QlikApiGenerator(config);
+                var qlikApiGenerator = new QlikApiGenerator(config, ScriptLanguage.CSharp);
                 var engineObjects = qlikApiGenerator.ReadJson(origJsonObject);
+                WriteCSharp(engineObjects, config, qlikApiGenerator);
 
-                logger.Info("Write Enums...");
-                var objectResults = engineObjects.Where(o => o.EngType == EngineType.ENUM).ToList();
-                var savePath = Path.Combine(config.OutputFolder, "Enums.cs");
-                qlikApiGenerator.SaveToCSharp(config, objectResults, savePath);
-
-                logger.Info("Write Interfaces...");
-                objectResults = engineObjects.Where(o => o.EngType == EngineType.INTERFACE).ToList();
-                savePath = Path.Combine(config.OutputFolder, "Interfaces.cs");
-                qlikApiGenerator.SaveToCSharp(config, objectResults, savePath);
-
-                logger.Info("Write Classes...");
-                objectResults = engineObjects.Where(o => o.EngType == EngineType.CLASS).ToList();
-                foreach (var classResult in objectResults)
-                {
-                    savePath = Path.Combine(config.OutputFolder, $"{classResult.Name}.cs");
-                    qlikApiGenerator.SaveToCSharp(config, new List<IEngineObject>() { classResult }, savePath);
-                }
+                qlikApiGenerator = new QlikApiGenerator(config, ScriptLanguage.TypeScript);
+                engineObjects = qlikApiGenerator.ReadJson(origJsonObject);
+                WriteTypeScript(engineObjects, config, qlikApiGenerator);
 
                 Environment.ExitCode = 0;
                 logger.Info("Finish");
@@ -116,6 +102,80 @@
                 logger.Error(ex, "Could not read cmd parameter.");
                 return null;
             }
+        }
+
+        private static void WriteCSharp(List<IEngineObject> engineObjects, QlikApiConfig config, QlikApiGenerator qlikApiGenerator)
+        {
+            //pragmas for compiler warnings
+            var pragmas = new List<string>()
+            {
+                "#pragma warning disable IDE1006",
+                "#pragma warning disable CS1591"
+            };
+
+            logger.Info("Write Enums...");
+            var objectResults = engineObjects.Where(o => o.EngType == EngineType.ENUM).ToList();
+            var savePath = Path.Combine(config.OutputFolder, "Enums.cs");
+            qlikApiGenerator.SaveTo(config, objectResults, savePath, pragmas);
+
+            logger.Info("Write Interfaces...");
+            objectResults = engineObjects.Where(o => o.EngType == EngineType.INTERFACE).ToList();
+            savePath = Path.Combine(config.OutputFolder, "Interfaces.cs");
+            qlikApiGenerator.SaveTo(config, objectResults, savePath);
+
+            logger.Info("Write Classes...");
+            objectResults = engineObjects.Where(o => o.EngType == EngineType.CLASS).ToList();
+            foreach (var classResult in objectResults)
+            {
+                savePath = Path.Combine(config.OutputFolder, $"{classResult.Name}.cs");
+                qlikApiGenerator.SaveTo(config, new List<IEngineObject>() { classResult }, savePath);
+            }
+        }
+
+        private static void WriteTypeScript(List<IEngineObject> engineObjects, QlikApiConfig config, QlikApiGenerator qlikApiGenerator)
+        {
+            logger.Info("Write Enums...");
+            var objectResults = engineObjects.Where(o => o.EngType == EngineType.ENUM).ToList();
+            var enumFile = Path.Combine(config.TypeScriptFolder, "Enums.d.ts");
+            qlikApiGenerator.SaveTo(config, objectResults, enumFile, null);
+
+            logger.Info("Write Interfaces...");
+            objectResults = engineObjects.Where(o => o.EngType == EngineType.INTERFACE).ToList();
+            var interfaceFile = Path.Combine(config.TypeScriptFolder, "Interfaces.d.ts");
+            qlikApiGenerator.SaveTo(config, objectResults, interfaceFile, null);
+
+            logger.Info("Write Classes...");
+            objectResults = engineObjects.Where(o => o.EngType == EngineType.CLASS).ToList();
+            var classFile = Path.Combine(config.TypeScriptFolder, $"Class.d.ts");
+            qlikApiGenerator.SaveTo(config, objectResults, classFile, null);
+
+            logger.Info("Write Index file...");
+            var indexBuilder = new StringBuilder();
+            indexBuilder.AppendLine("// Type definitions for qlik-engineapi 12.67");
+            indexBuilder.AppendLine("// Project: https://help.qlik.com/en-US/sense-developer/February2019/Subsystems/EngineAPI/Content/Sense_EngineAPI/introducing-engine-API.htm");
+            indexBuilder.AppendLine("// Definitions by: Konrad Mattheis <https://github.com/konne>");            
+            indexBuilder.AppendLine("// Definitions: https://github.com/DefinitelyTyped/DefinitelyTyped");
+            indexBuilder.AppendLine();
+            indexBuilder.Append($"declare namespace {config.NamespaceName.Replace("Qlik.","")} {{");            
+            var content = File.ReadAllText(enumFile);
+            indexBuilder.AppendLine($"\n    {content}");
+            content = File.ReadAllText(interfaceFile);
+            indexBuilder.AppendLine($"\n    {content}");
+            content = File.ReadAllText(classFile);
+            indexBuilder.AppendLine($"\n    {content}");
+            indexBuilder.AppendLine("}");
+
+            indexBuilder.AppendLine("");
+            indexBuilder.AppendLine("declare namespace enigmaJS {");
+            indexBuilder.AppendLine("    interface IGeneratedAPI {");
+            indexBuilder.AppendLine("    }");
+            indexBuilder.AppendLine("}");            
+
+            File.WriteAllText(Path.Combine(config.TypeScriptFolder, "index.d.ts"), indexBuilder.ToString());
+
+            File.Delete(enumFile);
+            File.Delete(interfaceFile);
+            File.Delete(classFile);
         }
 
         private static JObject GetJsonObject(string fullname)
