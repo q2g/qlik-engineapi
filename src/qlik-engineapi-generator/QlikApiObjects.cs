@@ -466,7 +466,25 @@ namespace QlikApiParser
                 else
                     throw new Exception($"Unknown script language {language.ToString()}");
 
-                return GetFormatedText(builder.ToString().TrimEnd());
+                var descResult = GetFormatedText(builder.ToString().TrimEnd());
+                if (descResult.Contains("[table]"))
+                {
+                    descResult = descResult.Replace("[/table]", "§[/table]");
+                    var match = Regex.Match(descResult, "(\\[table\\][^§]*§\\[/table\\])", RegexOptions.Singleline);
+                    if(match.Success)
+                    {
+                        var tableString = match.Groups[1].Value;
+                        tableString = tableString.Replace("[", "<");
+                        tableString = tableString.Replace("]", ">");
+                        tableString = tableString.Replace("///", "");
+                        tableString = tableString.Replace("§", "");
+                        tableString = Regex.Replace(tableString, "[ ]{2,}", " ");
+                        //Converthtml2markdown
+                        //list in table ?
+                    }
+                }
+
+                return descResult;
             }
             catch (Exception ex)
             {

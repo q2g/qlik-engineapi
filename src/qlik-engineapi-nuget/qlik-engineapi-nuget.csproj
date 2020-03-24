@@ -1,12 +1,12 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>net452;netcoreapp2.0;netcoreapp2.1</TargetFrameworks>    
+    <TargetFrameworks>net452;netcoreapp3.1</TargetFrameworks>    
     <RootNamespace>Qlik.EngineAPI</RootNamespace>
-    <AssemblyName>qlik-engineapi</AssemblyName>    
-
-    <Company />
+    <AssemblyName>qlik-engineapi</AssemblyName>
+    <Company>akquinet finance &amp; controlling GmbH</Company>
     <Product>XAML Markup Extensions</Product>
-    <Authors>Konrad Mattheis, Martin Berthold</Authors>
+    <Copyright>Copyright (c) $([System.DateTime]::Today.ToString('yyyy'))</Copyright>
+    <Authors>akquinet finance &amp; controlling GmbH</Authors>
     <RepositoryUrl>https://github.com/q2g/qlik-engineapi.git</RepositoryUrl>
     <PackageLicenseUrl>https://raw.githubusercontent.com/q2g/qlik-engineapi/master/LICENSE</PackageLicenseUrl>
     <PackageProjectUrl>https://github.com/q2g/qlik-engineapi</PackageProjectUrl>   
@@ -14,47 +14,19 @@
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
     <PackageReleaseNotes></PackageReleaseNotes>    
     <PackageTags>qlik sense engine engineapi</PackageTags>
-
     <Version>$(GitVersion_NuGetVersion)</Version>
     <GenerateAssemblyFileVersionAttribute>false</GenerateAssemblyFileVersionAttribute>
     <GenerateAssemblyInformationalVersionAttribute>false</GenerateAssemblyInformationalVersionAttribute>
     <GenerateAssemblyVersionAttribute>false</GenerateAssemblyVersionAttribute>
-
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
-
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
     <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
   </PropertyGroup>
 
-  <Choose>
-    <When Condition="'$(Configuration)' == 'Release'">
-      <PropertyGroup>
-        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-      </PropertyGroup>
-    </When>
-    <Otherwise>
-      <PropertyGroup>
-        <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
-      </PropertyGroup>
-    </Otherwise>
-  </Choose>
-
-  <!-->Target Name="CheckFileAvailable" BeforeTargets="BeforeBuild">
-    <Error Text="Codefiles have to be generated" Condition="!Exists('$(ProjectDir)\Interfaces.cs')" />    
-  </Target-->
-
-  <Target Name="PublishToNugetWithAPIKey" AfterTargets="GenerateNuspec">
-    <ReadLinesFromFile File="$(SolutionDir)\..\..\nugetapikey.txt">
-      <Output TaskParameter="Lines" PropertyName="NugetAPIKey" />
-    </ReadLinesFromFile>
-    <Exec WorkingDirectory="$(BaseDir)" Command="dotnet nuget push $(PackageOutputAbsolutePath)$(PackageId).$(PackageVersion).nupkg -k $(NugetAPIKey) -s https://api.nuget.org/v3/index.json" />
-  </Target>
-
   <ItemGroup>
-    <PackageReference Include="Newtonsoft.Json" Version="12.0.1" />    
-    <PackageReference Include="GitVersionTask" Version="4.0.0" PrivateAssets="All" />
-    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0-beta2-18618-05" PrivateAssets="All" />
+    <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />    
+    <PackageReference Include="GitVersionTask" Version="5.2.4" PrivateAssets="All" />
   </ItemGroup>
 
   <Target Name="DeleteFiles" AfterTargets="Clean">
@@ -62,5 +34,9 @@
       <FilesToClean Include="$(ProjectDir)\*.cs" />
     </ItemGroup>
     <Delete Files="@(FilesToClean)" />
+  </Target>
+
+  <Target Name="GitVersion" BeforeTargets="AfterBuild">
+    <Message Importance="High" Text="++++++ GitVersion: $(GitVersion_InformationalVersion) ++++++" />
   </Target>
 </Project>
