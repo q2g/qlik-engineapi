@@ -16,7 +16,7 @@
 
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
-    <PackageReference Include="GitVersionTask" Version="5.2.4" PrivateAssets="All" />
+    <PackageReference Include="GitVersionTask" Version="5.3.5" PrivateAssets="All" />
   </ItemGroup>
 
   <Target Name="DeleteFiles" AfterTargets="Clean">
