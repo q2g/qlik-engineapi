@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>net452;netcoreapp3.1</TargetFrameworks>
+    <TargetFrameworks>net452;net5.0</TargetFrameworks>
     <RootNamespace>Qlik.EngineAPI</RootNamespace>
     <AssemblyName>qlik-engineapi</AssemblyName>
     <Company>akquinet finance &amp; controlling GmbH</Company>
