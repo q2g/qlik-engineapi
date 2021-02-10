@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>net452;netcoreapp3.1</TargetFrameworks>
+    <TargetFrameworks>net452;net5.0</TargetFrameworks>
     <RootNamespace>Qlik.EngineAPI</RootNamespace>
     <AssemblyName>qlik-engineapi</AssemblyName>
     <Company>akquinet finance &amp; controlling GmbH</Company>
@@ -16,7 +16,7 @@
 
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
-    <PackageReference Include="GitVersionTask" Version="5.2.4" PrivateAssets="All" />
+    <PackageReference Include="GitVersionTask" Version="5.5.1" PrivateAssets="All" />
   </ItemGroup>
 
   <Target Name="DeleteFiles" AfterTargets="Clean">
